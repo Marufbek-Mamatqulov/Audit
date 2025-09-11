@@ -1,0 +1,28 @@
+{
+  "name": "audit-team-system",
+  "version": "1.0.0",
+  "description": "Document Management System with Django REST API and React Frontend",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "python manage.py runserver",
+    "start:frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "install:all": "pip install -r requirements.txt && cd frontend && npm install",
+    "migrate": "python manage.py makemigrations && python manage.py migrate",
+    "superuser": "python manage.py createsuperuser",
+    "collect-static": "python manage.py collectstatic --noinput"
+  },
+  "keywords": [
+    "django",
+    "react",
+    "document-management",
+    "onlyoffice",
+    "audit-system"
+  ],
+  "author": "Audit Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

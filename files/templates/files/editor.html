@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ file.name }} - Tahrirlash</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #495057;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        #onlyoffice-editor {
+            height: calc(100vh - 60px);
+            width: 100%;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 60px);
+            font-size: 16px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 {{ file.name }} - Tahrirlash</h1>
+        <a href="/files/" class="back-btn">← Fayllar ro'yxatiga qaytish</a>
+    </div>
+    
+    <div id="loading" class="loading">
+        <div>OnlyOffice editor yuklanmoqda...</div>
+    </div>
+    
+    <div id="onlyoffice-editor" style="display: none;"></div>
+
+    <script type="text/javascript" src="https://documentserver.onlyoffice.com/web-apps/apps/api/documents/api.js"></script>
+    <script type="text/javascript">
+        // OnlyOffice konfiguratsiyasini backend'dan olish
+        fetch('/api/files/{{ file.id }}/onlyoffice-config/', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(config => {
+            // Loading ni yashirish va editor ni ko'rsatish
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('onlyoffice-editor').style.display = 'block';
+            
+            // OnlyOffice editor konfiguratsiyasi
+            const editorConfig = {
+                "width": "100%",
+                "height": "100%",
+                "type": "desktop",
+                "documentType": "cell", // Excel fayllari uchun
+                "document": {
+                    "fileType": config.document.fileType,
+                    "key": config.document.key,
+                    "title": config.document.title,
+                    "url": config.document.url,
+                    "permissions": {
+                        "edit": true,
+                        "download": true,
+                        "print": true,
+                        "comment": true,
+                        "fillForms": true,
+                        "modifyFilter": true,
+                        "modifyContentControl": true,
+                        "review": true
+                    }
+                },
+                "editorConfig": {
+                    "mode": "edit",
+                    "lang": "uz",
+                    "user": {
+                        "id": config.editorConfig.user.id,
+                        "name": config.editorConfig.user.name
+                    },
+                    "customization": {
+                        "autosave": true,
+                        "forcesave": true,
+                        "compactToolbar": false,
+                        "toolbar": true,
+                        "zoom": 100
+                    },
+                    "callbackUrl": config.editorConfig.callbackUrl
+                },
+                "events": {
+                    "onDocumentStateChange": function(event) {
+                        console.log("Document state changed:", event);
+                    },
+                    "onError": function(event) {
+                        console.error("OnlyOffice error:", event);
+                        alert("Tahrirlashda xatolik yuz berdi: " + event.data);
+                    },
+                    "onRequestSaveAs": function(event) {
+                        console.log("Save as requested:", event);
+                    }
+                }
+            };
+
+            // OnlyOffice editor yaratish
+            new DocsAPI.DocEditor("onlyoffice-editor", editorConfig);
+        })
+        .catch(error => {
+            console.error('OnlyOffice konfiguratsiyasini olishda xatolik:', error);
+            document.getElementById('loading').innerHTML = 
+                '<div style="color: red;">Xatolik: Editor yuklanmadi. <a href="/files/">Fayllar ro\'yxatiga qaytish</a></div>';
+        });
+    </script>
+</body>
+</html>
