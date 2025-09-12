@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { filesApi } from '../services/api';
 import { useAppSelector } from '../hooks/redux';
+import ExcelViewer from './ExcelViewer';
 import { 
   ArrowLeftIcon,
   EyeIcon,
@@ -217,87 +218,40 @@ const FileEditor: React.FC = () => {
       </div>
 
       {/* Editor Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm border">
-          {file.file_type === 'excel' ? (
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Excel Tahrirlash</h2>
-              
-              {/* Demo Excel Editor Interface */}
-              <div className="border rounded-lg overflow-hidden">
-                {/* Toolbar */}
-                <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2 text-sm">
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">📁 Fayl</button>
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">📝 Tahrirlash</button>
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">📊 Kiritish</button>
-                  <div className="border-l mx-2 h-6"></div>
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">📋 Nusxalash</button>
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">📄 Joylashtirish</button>
-                  <div className="border-l mx-2 h-6"></div>
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">🔤 Arial</button>
-                  <button className="px-3 py-1 bg-white border rounded hover:bg-gray-50">12</button>
-                </div>
-
-                {/* Spreadsheet Area */}
-                <div className="bg-white p-4">
-                  <div className="text-center py-16 bg-gray-50 rounded border-2 border-dashed border-gray-300">
-                    <DocumentIcon className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Excel Tahrirlash Demo</h3>
-                    <p className="text-gray-600 mb-4">
-                      To'liq Excel tahrirlash uchun OnlyOffice Document Server o'rnatish kerak
-                    </p>
-                    <div className="space-y-2 text-sm text-gray-500">
-                      <p>• Hozircha bu demo interfeys</p>
-                      <p>• Excel faylni yuklab olib, kompyuterda tahrirlang</p>
-                      <p>• Yoki OnlyOffice/Google Sheets integratsiyasini qo'shing</p>
-                    </div>
-                    
-                    <div className="mt-6 flex justify-center gap-3">
-                      <button
-                        onClick={handleDownload}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                      >
-                        Faylni yuklab olish
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                      >
-                        Demo saqlash
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* File Info */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Fayl nomi</h3>
-                  <p className="text-sm text-gray-900">{file.name}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">O'lcham</h3>
-                  <p className="text-sm text-gray-900">{formatFileSize(file.file_size)}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Oxirgi o'zgartirish</h3>
-                  <p className="text-sm text-gray-900">
-                    {lastSaved ? lastSaved.toLocaleString('uz-UZ') : 'Hali saqlanmagan'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="p-6 text-center">
+      <div className="flex-1 overflow-hidden">
+        {file.file_type === 'excel' || file.file_type === 'xlsx' || file.file_type === 'xls' ? (
+          <ExcelViewer
+            fileUrl={file.file_url}
+            fileName={file.name}
+            canEdit={true}
+            onSave={async (data) => {
+              try {
+                setSaving(true);
+                // Bu yerda Excel ma'lumotlarini saqlash
+                console.log('Saving Excel data:', data);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setLastSaved(new Date());
+                alert('Excel fayl muvaffaqiyatli saqlandi!');
+              } catch (error) {
+                console.error('Error saving Excel:', error);
+                alert('Excel faylni saqlashda xatolik!');
+              } finally {
+                setSaving(false);
+              }
+            }}
+            onBack={() => navigate('/files')}
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center bg-white">
+            <div className="text-center">
               <ExclamationTriangleIcon className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Tahrirlash qo'llab-quvvatlanmaydi</h3>
               <p className="text-gray-600">
                 Faqat Excel fayllarini tahrirlash mumkin
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

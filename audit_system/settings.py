@@ -187,6 +187,20 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Development only
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 # OnlyOffice Document Server
 ONLYOFFICE_DOCUMENT_SERVER_URL = config('ONLYOFFICE_DOCUMENT_SERVER_URL', default='http://localhost:8080')
 ONLYOFFICE_JWT_SECRET = config('ONLYOFFICE_JWT_SECRET', default='your-secret-key')

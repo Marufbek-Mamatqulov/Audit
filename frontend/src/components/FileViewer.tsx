@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { filesApi } from '../services/api';
 import { useAppSelector } from '../hooks/redux';
+import ExcelViewer from './ExcelViewer';
 import { 
   ArrowLeftIcon,
   PencilIcon,
@@ -52,6 +53,8 @@ const FileViewer: React.FC = () => {
     try {
       setLoading(true);
       const response = await filesApi.getFile(fileId);
+      console.log('File data received:', response.data);
+      console.log('File URL:', response.data.file_url);
       setFile(response.data);
     } catch (error: any) {
       console.error('Error fetching file:', error);
@@ -202,48 +205,39 @@ const FileViewer: React.FC = () => {
         </div>
 
         {/* File Preview */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Fayl ko'rinishi</h2>
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b">
+            <h2 className="text-lg font-semibold text-gray-900">Fayl ko'rinishi</h2>
+          </div>
           
-          {file.file_type === 'excel' ? (
-            <div className="border rounded-lg p-8 text-center bg-gray-50">
-              <DocumentIcon className="h-20 w-20 text-green-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Excel Fayl</h3>
-              <p className="text-gray-600 mb-4">
-                Excel fayllarni to'liq ko'rish uchun yuklab oling yoki tahrirlash rejimiga o'ting
-              </p>
-              <div className="flex justify-center gap-3">
+          {file.file_type === 'excel' || file.file_type === 'xlsx' || file.file_type === 'xls' ? (
+            <ExcelViewer
+              fileUrl={file.file_url}
+              fileName={file.name}
+              canEdit={file.can_edit}
+              onSave={(data) => {
+                console.log('Excel saved:', data);
+                // Bu yerda saqlash logikasini qo'shamiz
+              }}
+              onBack={() => navigate('/files')}
+            />
+          ) : (
+            <div className="p-6">
+              <div className="border rounded-lg p-8 text-center bg-gray-50">
+                <DocumentIcon className="h-20 w-20 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {file.file_type.toUpperCase()} Fayl
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Bu fayl turini browser'da ko'rsatib bo'lmaydi. Yuklab oling.
+                </p>
                 <button
                   onClick={handleDownload}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                 >
                   Yuklab olish
                 </button>
-                {file.can_edit && (
-                  <button
-                    onClick={handleEdit}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                  >
-                    Tahrirlash
-                  </button>
-                )}
               </div>
-            </div>
-          ) : (
-            <div className="border rounded-lg p-8 text-center bg-gray-50">
-              <DocumentIcon className="h-20 w-20 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {file.file_type.toUpperCase()} Fayl
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Bu fayl turini browser'da ko'rsatib bo'lmaydi. Yuklab oling.
-              </p>
-              <button
-                onClick={handleDownload}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Yuklab olish
-              </button>
             </div>
           )}
         </div>

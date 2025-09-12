@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@fortune-sheet/react": "^1.0.2",
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.9.0",
@@ -16,13 +17,17 @@
     "@types/react-dom": "^19.1.9",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.11.0",
+    "luckysheet": "^2.1.13",
     "react": "^19.1.1",
+    "react-datasheet": "^1.4.12",
     "react-dom": "^19.1.1",
+    "react-excel-renderer": "^1.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.8.2",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",
