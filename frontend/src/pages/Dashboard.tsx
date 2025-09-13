@@ -11,9 +11,11 @@ const Dashboard: React.FC = () => {
   const { myFiles } = useAppSelector(state => state.file);
 
   useEffect(() => {
-    dispatch(fetchMyFiles());
-    dispatch(fetchMyDepartment());
-  }, [dispatch]);
+    if (user) {
+      dispatch(fetchMyFiles());
+      dispatch(fetchMyDepartment());
+    }
+  }, [dispatch, user]);
 
   useEffect(() => {
     // Redirect to appropriate dashboard based on role

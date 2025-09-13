@@ -10,8 +10,41 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, status
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def update_sheet_info(request, file_id):
+    """Update Excel sheet information"""
+    file_obj = get_object_or_404(File, id=file_id)
+    user = request.user
+    
+    # Check edit permission
+    if not file_obj.can_edit(user):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    # Update sheet information
+    sheet_count = request.data.get('sheet_count', 1)
+    has_multiple_sheets = request.data.get('has_multiple_sheets', False)
+    last_active_sheet = request.data.get('last_active_sheet')
+    
+    file_obj.sheet_count = sheet_count
+    file_obj.has_multiple_sheets = has_multiple_sheets
+    if last_active_sheet:
+        file_obj.last_active_sheet = last_active_sheet
+    
+    file_obj.save()
+    
+    return Response({
+        'success': True,
+        'sheet_count': file_obj.sheet_count,
+        'has_multiple_sheets': file_obj.has_multiple_sheets,
+        'last_active_sheet': file_obj.last_active_sheet
+    })
+
+
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
 from .models import File, FileVersion, FilePermission, OnlyOfficeSession
@@ -22,7 +55,8 @@ from .serializers import (
     FileVersionSerializer,
     OnlyOfficeConfigSerializer,
     FileLockSerializer,
-    FileSearchSerializer
+    FileSearchSerializer,
+    OneDriveEmbedSerializer
 )
 
 
@@ -427,6 +461,26 @@ def onlyoffice_config(request, file_id):
     if not (can_edit or can_view):
         return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
     
+    # For Excel files, check if we need to analyze sheets
+    if file_obj.file_type == 'excel' and not file_obj.has_multiple_sheets:
+        try:
+            # Try to detect sheets in Excel file
+            import openpyxl
+            wb = openpyxl.load_workbook(file_obj.file.path, read_only=True)
+            sheet_names = wb.sheetnames
+            sheet_count = len(sheet_names)
+            
+            # Update the file object with sheet information
+            file_obj.has_multiple_sheets = sheet_count > 1
+            file_obj.sheet_count = sheet_count
+            if sheet_count > 0:
+                file_obj.last_active_sheet = sheet_names[0]
+            file_obj.save()
+            
+        except Exception as e:
+            # Log the error but continue with default settings
+            print(f"Error analyzing Excel file sheets: {e}")
+    
     # Generate unique document key and session key
     document_key = str(uuid.uuid4())
     session_key = str(uuid.uuid4())
@@ -450,10 +504,19 @@ def onlyoffice_config(request, file_id):
         session.is_active = True
         session.save()
     
-    # Build absolute URLs
+        # Build absolute URLs
     file_url = request.build_absolute_uri(file_obj.file.url)
     callback_url = request.build_absolute_uri(f'/api/files/{file_id}/onlyoffice-callback/')
     
+    # Excel specific headers to ensure proper handling of multiple sheets
+    headers = {}
+    if file_obj.file_type == 'excel':
+        headers = {
+            'Content-Disposition': 'inline',
+            'X-Frame-Options': 'ALLOWALL',
+            'Access-Control-Allow-Origin': '*'
+        }
+        
     config = {
         'document': {
             'fileType': file_obj.file.name.split('.')[-1].lower(),
@@ -490,6 +553,15 @@ def onlyoffice_config(request, file_id):
                 'submitForm': can_edit
             }
         },
+        # Enhanced configuration for Excel files
+        'spreadsheet': {
+            'dataValidation': True,
+            'multipleSheets': True,
+            'formulas': True,
+            'rowColumnHeaders': True,
+            'gridLines': True,
+            'conditionalFormatting': True,
+        } if file_obj.file_type == 'excel' else {},
         'height': '600px',
         'width': '100%'
     }
@@ -528,6 +600,31 @@ def onlyoffice_callback(request, file_id):
                 
                 # Update main file version
                 file_obj.version += 1
+                
+                # If it's an Excel file, try to extract sheet information
+                if file_obj.file_type == 'excel':
+                    try:
+                        import openpyxl
+                        from tempfile import NamedTemporaryFile
+                        
+                        # Create temporary file
+                        with NamedTemporaryFile(suffix='.xlsx') as tmp:
+                            tmp.write(response.content)
+                            tmp.flush()
+                            
+                            # Load workbook to extract sheet info
+                            wb = openpyxl.load_workbook(tmp.name, read_only=True)
+                            sheet_names = wb.sheetnames
+                            sheet_count = len(sheet_names)
+                            
+                            # Update sheet information
+                            file_obj.has_multiple_sheets = sheet_count > 1
+                            file_obj.sheet_count = sheet_count
+                            if sheet_count > 0 and wb.active:
+                                file_obj.last_active_sheet = wb.active.title
+                    except Exception as e:
+                        print(f"Error analyzing Excel sheets on callback: {e}")
+                
                 file_obj.save()
     
     elif status_code == 3:  # Document saving error
@@ -685,6 +782,36 @@ def file_permissions_list(request):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def update_sheet_info(request, file_id):
+    """Update Excel sheet information"""
+    file_obj = get_object_or_404(File, id=file_id)
+    user = request.user
+    
+    # Check edit permission
+    if not file_obj.can_edit(user):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    # Update sheet information
+    sheet_count = request.data.get('sheet_count', 1)
+    has_multiple_sheets = request.data.get('has_multiple_sheets', False)
+    last_active_sheet = request.data.get('last_active_sheet')
+    
+    file_obj.sheet_count = sheet_count
+    file_obj.has_multiple_sheets = has_multiple_sheets
+    if last_active_sheet:
+        file_obj.last_active_sheet = last_active_sheet
+    
+    file_obj.save()
+    
+    return Response({
+        'success': True,
+        'sheet_count': file_obj.sheet_count,
+        'has_multiple_sheets': file_obj.has_multiple_sheets,
+        'last_active_sheet': file_obj.last_active_sheet
+    })
+
 @api_view(['DELETE'])
 @permission_classes([permissions.IsAuthenticated])
 def file_permission_delete(request, pk):
@@ -745,4 +872,47 @@ def file_viewer_view(request, pk):
         'file': file_obj,
         'user': request.user,
         'can_edit': can_edit
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def create_onedrive_embed(request):
+    """Create OneDrive embed file entry"""
+    user = request.user
+    
+    # Only admin can create OneDrive embeds
+    if user.role != 'admin':
+        return Response({'error': 'Only admin can create OneDrive embeds'}, status=status.HTTP_403_FORBIDDEN)
+    
+    serializer = OneDriveEmbedSerializer(data=request.data)
+    if serializer.is_valid():
+        file_obj = serializer.save(uploaded_by=user)
+        
+        # Return the created file data
+        response_serializer = FileSerializer(file_obj, context={'request': request})
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def onedrive_embed_view(request, file_id):
+    """Get OneDrive embed information for viewing"""
+    file_obj = get_object_or_404(File, id=file_id)
+    user = request.user
+    
+    # Check view permission
+    if not file_obj.can_view(user):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    if not file_obj.is_onedrive_embed:
+        return Response({'error': 'This is not a OneDrive embed file'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response({
+        'embed_url': file_obj.onedrive_embed_url,
+        'direct_link': file_obj.onedrive_direct_link,
+        'file_name': file_obj.name,
+        'can_edit': file_obj.can_edit(user)
     })

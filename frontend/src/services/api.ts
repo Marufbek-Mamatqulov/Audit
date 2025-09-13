@@ -180,6 +180,15 @@ export const filesApi = {
     responseType: 'blob'
   }),
   
+  // OneDrive embed
+  createOneDriveEmbed: (data: {
+    name: string;
+    description: string;
+    onedrive_embed_url: string;
+    onedrive_direct_link: string;
+    department?: number;
+  }) => api.post('/files/create-onedrive-embed/', data),
+  
   // File permissions
   getFilePermissions: () => api.get('/files/permissions/'),
   

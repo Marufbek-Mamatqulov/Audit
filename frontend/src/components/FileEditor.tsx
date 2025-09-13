@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { filesApi } from '../services/api';
-import { useAppSelector } from '../hooks/redux';
 import ExcelViewer from './ExcelViewer';
 import { 
   ArrowLeftIcon,
@@ -38,7 +37,6 @@ interface FileData {
 const FileEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user: currentUser } = useAppSelector(state => state.auth);
   
   const [file, setFile] = useState<FileData | null>(null);
   const [loading, setLoading] = useState(true);

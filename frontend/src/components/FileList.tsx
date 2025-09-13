@@ -17,6 +17,7 @@ interface FileListProps {
   onEditFile?: (fileId: number) => void;
   onViewFile?: (fileId: number) => void;
   onEditExcel?: (fileId: number, fileName: string) => void;
+  onViewOneDrive?: (fileId: number, fileName: string) => void;
 }
 
 interface FileItem {
@@ -42,9 +43,12 @@ interface FileItem {
   version: number;
   is_locked: boolean;
   locked_by: any;
+  is_onedrive_embed?: boolean;
+  onedrive_embed_url?: string;
+  onedrive_direct_link?: string;
 }
 
-const FileList: React.FC<FileListProps> = ({ onEditFile, onViewFile, onEditExcel }) => {
+const FileList: React.FC<FileListProps> = ({ onEditFile, onViewFile, onEditExcel, onViewOneDrive }) => {
   const dispatch = useAppDispatch();
   const { files, loading } = useAppSelector((state: any) => state.file);
   const { user } = useAppSelector(state => state.auth);
@@ -119,8 +123,10 @@ const FileList: React.FC<FileListProps> = ({ onEditFile, onViewFile, onEditExcel
     }
   });
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.includes('spreadsheet') || fileType.includes('excel')) {
+  const getFileIcon = (fileType: string, isOneDriveEmbed?: boolean) => {
+    if (isOneDriveEmbed) {
+      return '☁️'; // OneDrive cloud icon
+    } else if (fileType.includes('spreadsheet') || fileType.includes('excel')) {
       return '📊';
     } else if (fileType.includes('document') || fileType.includes('word')) {
       return '📄';
@@ -218,49 +224,49 @@ const FileList: React.FC<FileListProps> = ({ onEditFile, onViewFile, onEditExcel
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl shadow-xl rounded-2xl border border-white/20 overflow-hidden">
+    <div className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-5 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200/50">
+      <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">📁 Fayllar ro'yxati</h2>
-          <div className="flex items-center space-x-3">
+          <h2 className="text-sm lg:text-base font-semibold text-gray-900">📁 Files</h2>
+          <div className="flex items-center space-x-2">
             <div className="relative">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="h-3 w-3 lg:h-4 lg:w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Fayllarni qidirish..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur transition-all duration-200 hover:shadow-md"
+                className="pl-6 lg:pl-8 pr-2 py-1 lg:py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm bg-white"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-3 border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                showFilters ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white/50 backdrop-blur hover:bg-gray-50'
+              className={`p-1 lg:p-2 border border-gray-200 rounded-lg transition-all duration-200 ${
+                showFilters ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white hover:bg-gray-50'
               }`}
             >
-              <FunnelIcon className="h-5 w-5" />
+              <FunnelIcon className="h-3 w-3 lg:h-4 lg:w-4" />
             </button>
           </div>
         </div>
 
         {/* Filters */}
         {showFilters && (
-          <div className="mt-4 p-4 bg-white/50 backdrop-blur rounded-xl border border-gray-200/50 animate-slideInLeft">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Status:</label>
+          <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
+                <label className="text-xs font-medium text-gray-700">Status:</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/70 backdrop-blur"
+                  className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  <option value="">Barchasi</option>
-                  <option value="draft">Loyiha</option>
-                  <option value="review">Ko'rib chiqish</option>
-                  <option value="approved">Tasdiqlangan</option>
-                  <option value="archived">Arxivlangan</option>
+                  <option value="">All</option>
+                  <option value="draft">Draft</option>
+                  <option value="review">Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="archived">Archived</option>
                 </select>
               </div>
             </div>
@@ -269,159 +275,164 @@ const FileList: React.FC<FileListProps> = ({ onEditFile, onViewFile, onEditExcel
       </div>
 
       {/* File List */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200/50">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 backdrop-blur">
+      <div className="overflow-x-auto w-full overflow-y-hidden">
+        <table className="w-full divide-y divide-gray-200 table-fixed border-collapse">
+          <thead className="bg-gray-50">
             <tr>
               <th 
                 onClick={() => handleSort('name')}
-                className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100/70 transition-all duration-200 rounded-tl-xl"
+                className="px-1 py-1 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100 w-2/5 border-r border-gray-200"
               >
                 <div className="flex items-center space-x-1">
-                  <span>Fayl nomi</span>
+                  <span>Name</span>
                   <SortIcon field="name" />
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="px-1 py-1 text-left text-xs font-semibold text-gray-700 uppercase w-1/8 border-r border-gray-200">
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Bo'lim
+              <th className="px-1 py-1 text-left text-xs font-semibold text-gray-700 uppercase w-1/8 border-r border-gray-200">
+                Dept
               </th>
               <th 
                 onClick={() => handleSort('size')}
-                className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100/70 transition-all duration-200"
+                className="px-1 py-1 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100 w-1/10 border-r border-gray-200"
               >
                 <div className="flex items-center space-x-1">
-                  <span>Hajmi</span>
+                  <span>Size</span>
                   <SortIcon field="size" />
                 </div>
               </th>
               <th 
                 onClick={() => handleSort('updated_at')}
-                className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100/70 transition-all duration-200"
+                className="px-1 py-1 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100 w-1/10 border-r border-gray-200"
               >
                 <div className="flex items-center space-x-1">
-                  <span>O'zgartirilgan</span>
+                  <span>Updated</span>
                   <SortIcon field="updated_at" />
                 </div>
               </th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider rounded-tr-xl">
-                Amallar
+              <th className="px-1 py-1 text-right text-xs font-semibold text-gray-700 uppercase w-1/6">
+                Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white/30 backdrop-blur divide-y divide-gray-200/30">
+          <tbody className="bg-white divide-y divide-gray-200">
             {sortedFiles.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center">
-                  <div className="flex flex-col items-center justify-center animate-fadeIn">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-4">
-                      <DocumentIcon className="h-10 w-10 text-gray-400" />
+                <td colSpan={6} className="px-3 py-8 text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                      <DocumentIcon className="h-6 w-6 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Hech qanday fayl topilmadi</h3>
-                    <p className="text-sm text-gray-500">
-                      {searchTerm || statusFilter ? 'Filterlaringizga mos fayl yo\'q.' : 'Birinchi faylni yuklang.'}
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">No files found</h3>
+                    <p className="text-xs text-gray-500">
+                      {searchTerm || statusFilter ? 'No files match your filters.' : 'Upload your first file.'}
                     </p>
                   </div>
                 </td>
               </tr>
             ) : (
               sortedFiles.map((file: FileItem, index) => (
-                <tr key={file.id} className="hover:bg-white/50 hover:shadow-lg transition-all duration-200 group animate-fadeIn" style={{animationDelay: `${index * 50}ms`}}>
-                  <td className="px-6 py-5 whitespace-nowrap">
+                <tr key={file.id} className="hover:bg-gray-50 transition-all duration-200">
+                  <td className="px-1 py-1 whitespace-nowrap w-2/5 border-r border-gray-100">
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-200">
-                        <span className="text-xl">{getFileIcon(file.file_type)}</span>
+                      <div className="w-4 h-4 bg-gray-100 rounded flex items-center justify-center mr-1">
+                        <span className="text-xs">{getFileIcon(file.file_type, file.is_onedrive_embed)}</span>
                       </div>
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                        <div className="flex items-center space-x-0.5">
+                          <div className="text-xs font-semibold text-gray-900 truncate">
                             {file.name}
                           </div>
                           {file.is_locked && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border border-red-200">
-                              🔒 Bloklangan
+                            <span className="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              🔒
                             </span>
                           )}
                         </div>
                         {file.description && (
-                          <div className="text-sm text-gray-500 truncate max-w-xs mt-1">
+                          <div className="text-xs text-gray-500 truncate">
                             {file.description}
                           </div>
                         )}
-                        <div className="text-xs text-gray-400 mt-1 flex items-center space-x-2">
+                        <div className="text-xs text-gray-400 flex items-center space-x-0.5">
                           <span>v{file.version}</span>
-                          <span>•</span>
-                          <span>{file.created_by.first_name} {file.created_by.last_name}</span>
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
+                  <td className="px-1 py-1 whitespace-nowrap w-1/8 border-r border-gray-100">
                     {getStatusBadge(file.status)}
                   </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center mr-2">
-                        <span className="text-xs font-semibold text-gray-600">🏢</span>
-                      </div>
-                      <span className="text-sm text-gray-900">{file.department.name}</span>
-                    </div>
+                  <td className="px-1 py-1 whitespace-nowrap w-1/8 border-r border-gray-100">
+                    <span className="text-xs text-gray-900 truncate">
+                      {file.department.name}
+                    </span>
                   </td>
-                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500 font-medium">
+                  <td className="px-1 py-1 whitespace-nowrap text-xs text-gray-500 font-medium w-1/10 border-r border-gray-100">
                     {formatFileSize(file.file_size)}
                   </td>
-                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-1 py-1 whitespace-nowrap text-xs text-gray-500 w-1/10 border-r border-gray-100">
                     {formatDate(file.updated_at)}
                   </td>
-                  <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-1">
+                  <td className="px-1 py-1 whitespace-nowrap text-right text-xs font-medium w-1/6">
+                    <div className="flex items-center justify-end space-x-0.5">
                       <button
                         onClick={() => onViewFile?.(file.id)}
-                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
-                        title="Ko'rish"
+                        className="p-0.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all duration-200"
+                        title="View"
                       >
-                        <EyeIcon className="h-4 w-4" />
+                        <EyeIcon className="h-3 w-3" />
                       </button>
                       
-                      {/* Excel fayllar uchun OnlyOffice editor tugma */}
-                      {file.file_type === 'excel' && (
+                      {/* Excel files OneDrive or OnlyOffice */}
+                      {file.file_type === 'excel' && file.is_onedrive_embed && (
+                        <button
+                          onClick={() => onViewOneDrive?.(file.id, file.name)}
+                          className="p-0.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all duration-200"
+                          title="OneDrive"
+                        >
+                          <span className="text-xs">☁️</span>
+                        </button>
+                      )}
+                      
+                      {file.file_type === 'excel' && !file.is_onedrive_embed && (
                         <button
                           onClick={() => onEditExcel?.(file.id, file.name)}
-                          className="p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110"
-                          title="Excel da tahrirlash"
+                          className="p-0.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded transition-all duration-200"
+                          title="Excel"
                         >
-                          <span className="text-sm font-bold">📊</span>
+                          <span className="text-xs">📊</span>
                         </button>
                       )}
                       
                       <button
                         onClick={() => handleDownload(file)}
-                        className="p-2 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all duration-200 hover:scale-110"
-                        title="Yuklab olish"
+                        className="p-0.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 rounded transition-all duration-200"
+                        title="Download"
                       >
-                        <ArrowDownTrayIcon className="h-4 w-4" />
+                        <ArrowDownTrayIcon className="h-3 w-3" />
                       </button>
                       
                       {canEditFile(file) && (
                         <button
                           onClick={() => onEditFile?.(file.id)}
-                          className="p-2 text-gray-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                          title="Tahrirlash"
+                          className="p-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 rounded transition-all duration-200 disabled:opacity-50"
+                          title="Edit"
                           disabled={file.is_locked && file.locked_by?.id !== user?.id}
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <PencilIcon className="h-3 w-3" />
                         </button>
                       )}
                       
                       {canDeleteFile(file) && (
                         <button
                           onClick={() => handleDelete(file.id, file.name)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
-                          title="O'chirish"
+                          className="p-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all duration-200"
+                          title="Delete"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <TrashIcon className="h-3 w-3" />
                         </button>
                       )}
                     </div>

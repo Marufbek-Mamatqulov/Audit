@@ -15,7 +15,12 @@ urlpatterns = [
     
     # OnlyOffice integration
     path('<int:file_id>/onlyoffice-config/', views.onlyoffice_config, name='onlyoffice_config'),
+    path('<int:file_id>/update-sheet-info/', views.update_sheet_info, name='update_sheet_info'),
     path('<int:file_id>/onlyoffice-callback/', views.onlyoffice_callback, name='onlyoffice_callback'),
+    
+    # OneDrive embed
+    path('create-onedrive-embed/', views.create_onedrive_embed, name='create_onedrive_embed'),
+    path('<int:file_id>/onedrive-embed/', views.onedrive_embed_view, name='onedrive_embed_view'),
     
     # OnlyOffice Editor and Viewer
     path('<int:pk>/edit/', views.file_editor_view, name='file_editor'),

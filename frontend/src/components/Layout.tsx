@@ -50,18 +50,8 @@ const Layout: React.FC = () => {
     );
   }
 
-  const getPageTitle = () => {
-    if (location.pathname.includes('admin-dashboard')) return 'Administrator Dashboard';
-    if (location.pathname.includes('user-dashboard')) return 'Foydalanuvchi Dashboard';
-    if (location.pathname.includes('files')) return 'Fayllar boshqaruvi';
-    if (location.pathname.includes('users')) return 'Foydalanuvchilar';
-    if (location.pathname.includes('departments')) return 'Bo\'limlar';
-    if (location.pathname.includes('profile')) return 'Profil sozlamalari';
-    return 'Audit System';
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
@@ -71,18 +61,18 @@ const Layout: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-30 w-72 bg-white/95 backdrop-blur-xl shadow-2xl border-r border-gray-200/50 transform transition-all duration-300 ease-out ${
+      <div className={`fixed lg:relative inset-y-0 left-0 z-50 w-64 lg:w-64 flex-shrink-0 bg-white/95 backdrop-blur-xl shadow-2xl border-r border-gray-200/50 transform transition-all duration-300 ease-out ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         {/* Logo qismi */}
-        <div className="flex items-center justify-between h-20 px-6 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 shadow-lg">
+        <div className="flex items-center justify-center lg:justify-between h-16 px-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 shadow-lg">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/20 rounded-xl backdrop-blur">
-              <ChartBarIcon className="h-8 w-8 text-white" />
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur">
+              <ChartBarIcon className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Audit System</h1>
-              <p className="text-xs text-blue-100">Document Management</p>
+            <div className="hidden lg:block">
+              <h1 className="text-lg font-bold text-white">Audit</h1>
+              <p className="text-sm text-blue-100">Docs</p>
             </div>
           </div>
           <button
@@ -94,27 +84,28 @@ const Layout: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="mt-8 px-4">
+        <nav className="flex-1 mt-6 px-4 overflow-y-auto">
           <div className="space-y-2">
             {navigation.map((item, index) => (
               <NavLink
                 key={item.name}
                 to={item.href}
                 className={({ isActive }) =>
-                  `group flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 relative ${
+                  `group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25'
                       : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
                   }`
                 }
+                title={item.name}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <item.icon className={`mr-4 h-5 w-5 flex-shrink-0 transition-all ${
+                <item.icon className={`h-5 w-5 mr-3 flex-shrink-0 transition-all ${
                   location.pathname.includes(item.href.split('/')[1]) ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'
                 }`} />
-                {item.name}
+                <span>{item.name}</span>
                 {location.pathname.includes(item.href.split('/')[1]) && (
-                  <div className="absolute right-3 w-2 h-2 bg-white rounded-full animate-pulse" />
+                  <div className="absolute right-2 w-2 h-2 bg-white rounded-full animate-pulse" />
                 )}
               </NavLink>
             ))}
@@ -122,25 +113,25 @@ const Layout: React.FC = () => {
         </nav>
 
         {/* Foydalanuvchi ma'lumotlari */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200/50 bg-gradient-to-t from-gray-50/50 to-transparent">
-          <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
-            <div className="flex items-center space-x-3 mb-4">
+        <div className="p-4 border-t border-gray-200/50 bg-gradient-to-t from-gray-50/50 to-transparent">
+          <div className="bg-white rounded-lg p-3 shadow-lg border border-gray-100">
+            <div className="flex items-center space-x-3 mb-3">
               <div className="relative">
-                <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-lg font-bold text-white">
-                    {(user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase()}
+                <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <span className="text-sm font-bold text-white">
+                    {(user?.first_name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
                   </span>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">
-                  {user?.first_name || user?.username}
+                  {user?.first_name || user?.email}
                 </p>
                 <p className="text-xs text-gray-500 capitalize flex items-center">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                  {user?.role === 'admin' ? 'Administrator' : 
-                   user?.role === 'manager' ? 'Menejer' : 'Foydalanuvchi'}
+                  <span className="w-1 h-1 bg-blue-500 rounded-full mr-1"></span>
+                  {user?.role === 'admin' ? 'Admin' : 
+                   user?.role === 'manager' ? 'Manager' : 'User'}
                 </p>
               </div>
             </div>
@@ -148,16 +139,18 @@ const Layout: React.FC = () => {
             <div className="flex space-x-2">
               <NavLink
                 to="/profile"
-                className="flex-1 flex items-center justify-center rounded-xl bg-gray-50 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-all"
+                className="flex-1 flex items-center justify-center rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all"
+                title="Profil"
               >
-                <UserIcon className="h-4 w-4 mr-1.5" />
-                Profil
+                <UserIcon className="h-4 w-4 mr-2" />
+                <span>Profil</span>
               </NavLink>
               <button
                 onClick={handleLogout}
-                className="flex-1 flex items-center justify-center rounded-xl bg-gradient-to-r from-red-500 to-pink-500 px-3 py-2.5 text-xs font-medium text-white hover:from-red-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-red-500/25"
+                className="flex-1 flex items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-pink-500 px-3 py-2 text-sm font-medium text-white hover:from-red-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-red-500/25"
+                title="Chiqish"
               >
-                <ArrowRightOnRectangleIcon className="h-4 w-4 mr-1.5" />
+                <ArrowRightOnRectangleIcon className="h-3 w-3 lg:mr-1" />
                 Chiqish
               </button>
             </div>
@@ -165,65 +158,51 @@ const Layout: React.FC = () => {
         </div>
       </div>
 
-      {/* Asosiy kontent */}
-      <div className="lg:pl-72">
-        {/* Yuqori panel */}
-        <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
-          <div className="flex items-center justify-between h-20 px-6">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Top Header */}
+        <div className="flex-shrink-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+          <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
+                className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
               >
-                <Bars3Icon className="h-6 w-6" />
+                <Bars3Icon className="h-5 w-5" />
               </button>
               
               <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  {getPageTitle()}
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Document Management
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {new Date().toLocaleDateString('uz-UZ', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Qidiruv */}
-              <div className="hidden md:flex items-center space-x-2 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200">
-                <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+              {/* Search */}
+              <div className="flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                 <input 
                   type="text" 
                   placeholder="Qidiruv..." 
-                  className="bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400 w-32"
+                  className="bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400 w-32 min-w-0"
                 />
               </div>
               
-              {/* Bildirishnomalar */}
-              <button className="relative p-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all">
+              {/* Notifications */}
+              <button className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all">
                 <BellIcon className="h-5 w-5" />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
                   <span className="text-xs text-white font-bold">3</span>
                 </div>
               </button>
-              
-              {/* Status */}
-              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500 bg-green-50 rounded-xl px-3 py-2 border border-green-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-700 font-medium">Online</span>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Sahifa kontenti */}
-        <main className="p-6">
-          <div className="animate-fadeIn">
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="w-full max-w-full animate-fadeIn">
             <Outlet />
           </div>
         </main>

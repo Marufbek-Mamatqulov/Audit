@@ -37,7 +37,8 @@ class FileSerializer(serializers.ModelSerializer):
             'status', 'uploaded_by', 'uploaded_by_name', 'department',
             'department_name', 'file_size', 'file_size_mb', 'version',
             'is_locked', 'locked_by', 'locked_by_name', 'lock_time',
-            'can_edit', 'can_view', 'permissions', 'created_at', 'updated_at'
+            'can_edit', 'can_view', 'permissions', 'created_at', 'updated_at',
+            'onedrive_embed_url', 'is_onedrive_embed', 'onedrive_direct_link'
         )
         read_only_fields = (
             'id', 'uploaded_by', 'file_type', 'file_size', 'version',
@@ -156,6 +157,48 @@ class FilePermissionSerializer(serializers.Serializer):
     
     user_id = serializers.IntegerField()
     permission_type = serializers.ChoiceField(choices=['read', 'write', 'admin'])
+
+
+class OneDriveEmbedSerializer(serializers.ModelSerializer):
+    """OneDrive embed file serializer"""
+    
+    class Meta:
+        model = File
+        fields = (
+            'name', 'description', 'department', 'onedrive_direct_link', 'onedrive_embed_url'
+        )
+    
+    def create(self, validated_data):
+        """Create OneDrive embed file"""
+        validated_data['is_onedrive_embed'] = True
+        validated_data['file_type'] = 'excel'  # OneDrive embeds are typically Excel files
+        
+        # Handle empty department field
+        if validated_data.get('department') == '':
+            validated_data['department'] = None
+        
+        # Extract embed URL from direct link if not provided
+        direct_link = validated_data.get('onedrive_direct_link', '')
+        if direct_link and not validated_data.get('onedrive_embed_url'):
+            validated_data['onedrive_embed_url'] = self.convert_to_embed_url(direct_link)
+        
+        return super().create(validated_data)
+    
+    def convert_to_embed_url(self, direct_link):
+        """Convert OneDrive direct link to embed URL"""
+        try:
+            # Example conversion logic for OneDrive links
+            # Replace /view?id= with embed parameters
+            if '1drv.ms' in direct_link and '/x/' in direct_link:
+                # Extract the file path from the URL
+                import re
+                match = re.search(r'1drv\.ms/x/([^/]+/[^/?]+)', direct_link)
+                if match:
+                    file_path = match.group(1)
+                    return f"https://1drv.ms/x/{file_path}/IQQje0EkhUCVRpLwAmHhua0LAV5Pd1qxAIX_f7cOYxTg4yc?em=2&wdAllowInteractivity=True&wdHideGridlines=False&wdHideHeaders=False&wdDownloadButton=True&wdInConfigurator=True"
+            return direct_link
+        except:
+            return direct_link
 
 
 class FileSearchSerializer(serializers.Serializer):

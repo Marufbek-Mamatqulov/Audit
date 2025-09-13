@@ -24,9 +24,6 @@ urlpatterns = [
     path('api/auth/', include('authentication.urls')),
     path('api/departments/', include('departments.urls')),
     path('api/files/', include('files.urls')),
-    
-    # OnlyOffice Editor va Viewer (template view'lar uchun)
-    path('files/', include('files.urls')),
 ]
 
 # Serve media files during development

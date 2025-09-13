@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../hooks/redux';
+import ExcelSheetManager from './ExcelSheetManager';
 
 interface OnlyOfficeEditorProps {
   fileId?: number;
@@ -41,7 +42,8 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
       }
 
       const script = document.createElement('script');
-      script.src = 'http://localhost/web-apps/apps/api/documents/api.js';
+      const onlyOfficeUrl = process.env.REACT_APP_ONLYOFFICE_URL || 'http://localhost/web-apps/apps/api/documents/api.js';
+      script.src = onlyOfficeUrl;
       script.onload = () => {
         setIsScriptLoaded(true);
         resolve();
@@ -66,7 +68,7 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`http://localhost:8000/api/files/${fileId}/onlyoffice-config/`, {
+      const response = await fetch(`/api/files/${fileId}/onlyoffice-config/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         }
@@ -77,16 +79,25 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
       }
 
       const config = await response.json();
+      
+      // Log for debugging
+      console.log('File configuration received:', config);
 
+      // Get the document type for the file
+      const documentType = getDocumentType(fileName);
+      // Get type-specific configuration
+      const typeConfig = getTypeSpecificConfig(documentType);
+      
       const editorConfig = {
         ...config,
         width: "100%",
         height: "100%",
-        documentType: getDocumentType(fileName),
+        documentType: documentType,
         document: {
           ...config.document,
           title: fileName,
         },
+        ...typeConfig, // Add document type-specific configuration
         editorConfig: {
           ...config.editorConfig,
           lang: 'uz',
@@ -114,20 +125,35 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
               }
             },
             plugins: true,
-            macros: false,
-            trackChanges: false,
-            chat: false,
+            macros: true, // Enable macros for Excel functionality
+            trackChanges: true, // Enable track changes
+            chat: true, // Enable chat for collaborative editing
             comments: true,
             zoom: 100,
             compactToolbar: false,
             leftMenu: true,
-            rightMenu: false,
+            rightMenu: true, // Enable right menu for cell properties
             toolbar: true,
             statusBar: true,
             autosave: true,
             forcesave: true,
             commentAuthorOnly: false,
-            showReviewChanges: false
+            showReviewChanges: true,
+            /**
+             * Excel-specific customization for enhanced experience
+             */
+            sheets: {
+              show: true, // Always show sheets tab bar
+              limit: 100  // Support up to 100 sheets
+            },
+            formulaEditor: {
+              enabled: true, // Enable advanced formula editing
+            },
+            layout: {
+              functionalTab: {
+                visible: true // Show Excel functional tabs
+              }
+            }
           },
           user: {
             id: user.id?.toString(),
@@ -191,16 +217,62 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
     switch (extension) {
       case 'xlsx':
       case 'xls':
+      case 'csv':
+      case 'ods':
+      case 'numbers':
         return 'cell';
       case 'docx':
       case 'doc':
+      case 'odt':
+      case 'rtf':
+      case 'txt':
         return 'word';
       case 'pptx':
       case 'ppt':
+      case 'odp':
         return 'slide';
       default:
         return 'word';
     }
+  };
+  
+  // Get Excel specific configuration based on document type
+  const getTypeSpecificConfig = (documentType: string) => {
+    if (documentType === 'cell') {
+      return {
+        cell: {
+          // Excel-specific features
+          enhancedFormatting: true, // Enable enhanced Excel formatting
+          multipleSheets: true, // Support multiple sheets
+          formulas: {
+            advanced: true, // Advanced formula support
+            autoComplete: true // Formula auto-completion
+          },
+          dataValidation: true, // Support data validation
+          conditionalFormatting: true, // Support conditional formatting
+          // Excel-specific UI settings
+          ui: {
+            showGridlines: true,
+            showHeadings: true,
+            showSheetTabs: true,
+            maxSheets: 100, // Support up to 100 sheets
+            enableFreezing: true, // Enable row/column freezing
+            showFormulaBar: true,
+          },
+          // Full support for Excel formatting options
+          formatting: {
+            currencies: true, // Currency format support
+            numberFormats: true, // Number format support
+            textFormats: true, // Text format support
+            colors: true, // Cell colors and formatting
+            fonts: {
+              all: true // Support all Excel fonts
+            }
+          }
+        }
+      };
+    }
+    return {};
   };
 
   const handleCloseClick = () => {
@@ -214,51 +286,75 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
     if (onClose) onClose();
   };
 
+  const [isExcelFile, setIsExcelFile] = useState(fileName.toLowerCase().endsWith('.xlsx') || 
+                                           fileName.toLowerCase().endsWith('.xls'));
+
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative', backgroundColor: '#f8f9fa' }}>
-      {/* Header */}
+      {/* Custom Excel-like header */}
       <div style={{ 
-        height: '60px', 
-        backgroundColor: '#2c3e50', 
+        height: '32px', 
+        backgroundColor: '#217346', /* Excel green */
         color: 'white', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',
-        padding: '0 20px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        padding: '0 10px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        fontSize: '13px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px' }}>📊 Excel Editor</h3>
-          <span style={{ 
-            backgroundColor: 'rgba(255,255,255,0.2)', 
-            padding: '4px 12px', 
-            borderRadius: '15px',
-            fontSize: '14px'
-          }}>
-            {fileName}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontWeight: 'bold' }}>
+            {fileName} - Audit System Excel
           </span>
         </div>
-        <button
-          onClick={handleCloseClick}
-          style={{
-            backgroundColor: '#e74c3c',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          ✕ Yopish
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button
+            onClick={handleCloseClick}
+            style={{
+              backgroundColor: 'transparent',
+              color: 'white',
+              border: 'none',
+              padding: '4px 8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            title="Yopish"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      
+      {/* Excel-like menu bar */}
+      <div style={{
+        height: '24px',
+        backgroundColor: '#f3f2f1',
+        borderBottom: '1px solid #e1dfdd',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 10px',
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        fontSize: '12px'
+      }}>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Файл</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Главная</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Вставка</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Разметка страницы</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Формулы</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Данные</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Рецензирование</span>
+          <span style={{ padding: '0 5px', cursor: 'default' }}>Вид</span>
+        </div>
       </div>
 
       {/* Editor Container */}
-      <div style={{ height: 'calc(100vh - 60px)', position: 'relative' }}>
+      <div style={{ height: 'calc(100vh - 56px)', position: 'relative' }}>
         {isLoading && (
           <div style={{
             position: 'absolute',
@@ -341,6 +437,15 @@ const OnlyOfficeEditor: React.FC<OnlyOfficeEditorProps> = ({
             visibility: (isLoading || error) ? 'hidden' : 'visible'
           }}
         />
+        
+        {/* Excel Sheet Manager (visible only for Excel files) */}
+        {isExcelFile && !isLoading && !error && window.docEditor && (
+          <ExcelSheetManager 
+            documentEditor={window.docEditor} 
+            fileId={fileId}
+            fileName={fileName}
+          />
+        )}
       </div>
     </div>
   );

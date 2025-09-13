@@ -24,6 +24,7 @@ interface User {
   id: number;
   first_name: string;
   last_name: string;
+  username: string;
   email: string;
 }
 
@@ -41,6 +42,9 @@ interface FileData {
   file_url: string;
   can_edit: boolean;
   can_delete: boolean;
+  is_onedrive_embed?: boolean;
+  onedrive_embed_url?: string;
+  onedrive_direct_link?: string;
 }
 
 const FilesPage: React.FC = () => {
@@ -51,22 +55,32 @@ const FilesPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
+  
+  // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterFileType, setFilterFileType] = useState('');
-
+  
+  // Modal states
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showOneDriveModal, setShowOneDriveModal] = useState(false);
+  
+  // Upload form states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadFormData, setUploadFormData] = useState({
     name: '',
     description: '',
-    department: '',
-    file_type: 'excel'
+    department: ''
   });
-
-  // Xavfsiz arrays
-  const safeFiles = Array.isArray(files) ? files : [];
-  const safeDepartments = Array.isArray(departments) ? departments : [];
+  
+  // OneDrive form states
+  const [oneDriveFormData, setOneDriveFormData] = useState({
+    name: '',
+    description: '',
+    embed_url: '',
+    direct_link: '',
+    department: ''
+  });
 
   // Fetch data
   useEffect(() => {
@@ -78,8 +92,17 @@ const FilesPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await filesApi.getFiles();
-      const data = response.data;
-      setFiles(Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : []);
+      
+      let filesData: FileData[] = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          filesData = response.data;
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          filesData = response.data.results;
+        }
+      }
+      
+      setFiles(filesData);
     } catch (error) {
       console.error('Error fetching files:', error);
       setFiles([]);
@@ -91,31 +114,39 @@ const FilesPage: React.FC = () => {
   const fetchDepartments = async () => {
     try {
       const response = await departmentsApi.getDepartments();
-      const data = response.data;
-      setDepartments(Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : []);
+      
+      let deptData: Department[] = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          deptData = response.data;
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          deptData = response.data.results;
+        }
+      }
+      
+      setDepartments(deptData);
     } catch (error) {
       console.error('Error fetching departments:', error);
       setDepartments([]);
     }
   };
 
-  // File upload
+  // File operations
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedFile || !uploadFormData.name.trim()) {
-      alert('Fayl va nom majburiy!');
+    if (!selectedFile) {
+      alert('Iltimos fayl tanlang');
       return;
     }
 
     try {
       setUploadLoading(true);
+      
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('name', uploadFormData.name);
+      formData.append('name', uploadFormData.name || selectedFile.name);
       formData.append('description', uploadFormData.description);
-      formData.append('file_type', uploadFormData.file_type);
-      
       if (uploadFormData.department) {
         formData.append('department', uploadFormData.department);
       }
@@ -125,68 +156,78 @@ const FilesPage: React.FC = () => {
       setShowUploadModal(false);
       resetUploadForm();
       fetchFiles();
-      alert('Fayl muvaffaqiyatli yuklandi!');
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Fayl yuklashda xatolik yuz berdi!');
+      alert('Fayl yuklashda xatolik yuz berdi');
     } finally {
       setUploadLoading(false);
     }
   };
 
-  const resetUploadForm = () => {
-    setSelectedFile(null);
-    setUploadFormData({
-      name: '',
-      description: '',
-      department: '',
-      file_type: 'excel'
-    });
-  };
-
-  // File actions
-  const handleFileDownload = async (fileId: number, fileName: string) => {
+  const handleOneDriveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      const response = await filesApi.downloadFile(fileId);
-      const blob = new Blob([response.data]);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      setUploadLoading(true);
+      
+      await filesApi.createOneDriveEmbed({
+        name: oneDriveFormData.name,
+        description: oneDriveFormData.description,
+        onedrive_embed_url: oneDriveFormData.embed_url,
+        onedrive_direct_link: oneDriveFormData.direct_link,
+        department: oneDriveFormData.department ? parseInt(oneDriveFormData.department) : undefined
+      });
+      
+      setShowOneDriveModal(false);
+      resetOneDriveForm();
+      fetchFiles();
     } catch (error) {
-      console.error('Error downloading file:', error);
-      alert('Faylni yuklab olishda xatolik!');
+      console.error('Error creating OneDrive embed:', error);
+      alert('OneDrive fayl yaratishda xatolik yuz berdi');
+    } finally {
+      setUploadLoading(false);
     }
   };
 
   const handleFileDelete = async (fileId: number) => {
-    if (!window.confirm('Faylni o\'chirishni tasdiqlaysizmi?')) return;
-    
+    if (!window.confirm('Bu faylni o\'chirmoqchimisiz?')) {
+      return;
+    }
+
     try {
       await filesApi.deleteFile(fileId);
       fetchFiles();
-      alert('Fayl muvaffaqiyatli o\'chirildi!');
     } catch (error) {
       console.error('Error deleting file:', error);
-      alert('Faylni o\'chirishda xatolik!');
+      alert('Fayl o\'chirishda xatolik yuz berdi');
     }
   };
 
-  const handleFileEdit = (file: FileData) => {
-    // Hozircha OnlyOffice o'rniga simple file preview
-    if (file.file_type === 'excel') {
-      // React sahifasida Excel viewer component ochish
-      window.open(`http://localhost:3000/file-editor/${file.id}`, '_blank');
-    } else {
-      alert('Bu fayl turini tahrirlash hozircha qo\'llab-quvvatlanmaydi');
+  const handleFileDownload = async (fileId: number, fileName: string) => {
+    try {
+      const response = await filesApi.downloadFile(fileId);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Fayl yuklab olishda xatolik yuz berdi');
     }
   };
 
   const handleFileView = (file: FileData) => {
-    if (file.file_type === 'excel') {
-      // Excel fayllari uchun viewer component
+    if (file.is_onedrive_embed && file.onedrive_embed_url) {
+      // OneDrive embed fayllar uchun
+      window.open(`http://localhost:3000/onedrive-viewer/${file.id}`, '_blank');
+    } else if (file.file_type === 'excel') {
+      // Oddiy Excel fayllari uchun OnlyOffice viewer
       window.open(`http://localhost:3000/file-viewer/${file.id}`, '_blank');
     } else {
       // Boshqa fayllar uchun download
@@ -194,7 +235,36 @@ const FilesPage: React.FC = () => {
     }
   };
 
+  const handleFileEdit = (file: FileData) => {
+    if (file.file_type === 'excel' && !file.is_onedrive_embed) {
+      window.open(`http://localhost:3000/file-editor/${file.id}`, '_blank');
+    }
+  };
+
+  // Helper functions
+  const resetUploadForm = () => {
+    setSelectedFile(null);
+    setUploadFormData({
+      name: '',
+      description: '',
+      department: ''
+    });
+  };
+
+  const resetOneDriveForm = () => {
+    setOneDriveFormData({
+      name: '',
+      description: '',
+      embed_url: '',
+      direct_link: '',
+      department: ''
+    });
+  };
+
   // Filter files
+  const safeFiles = Array.isArray(files) ? files : [];
+  const safeDepartments = Array.isArray(departments) ? departments : [];
+  
   const filteredFiles = safeFiles.filter(file => {
     const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          file.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -216,7 +286,16 @@ const FilesPage: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getFileTypeIcon = (fileType: string) => {
+  const getFileTypeIcon = (fileType: string, isOneDriveEmbed: boolean = false) => {
+    if (isOneDriveEmbed) {
+      return (
+        <div className="relative">
+          <DocumentDuplicateIcon className="h-5 w-5 text-blue-600" />
+          <span className="absolute -top-1 -right-1 text-xs">☁️</span>
+        </div>
+      );
+    }
+    
     switch (fileType) {
       case 'excel':
         return <DocumentDuplicateIcon className="h-5 w-5 text-green-600" />;
@@ -252,37 +331,57 @@ const FilesPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FolderOpenIcon className="h-8 w-8 text-blue-600" />
+    <div className="w-full h-full">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <FolderOpenIcon className="h-7 w-7 text-blue-600" />
             Fayllar
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-2 text-base">
             Excel va boshqa hujjatlarni yuklang va tahrirlang
           </p>
         </div>
         
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Yangi fayl yuklash
-        </button>
+        {/* Admin buttons */}
+        {isAdmin ? (
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto lg:w-auto">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-xs lg:text-sm font-medium shadow-lg hover:shadow-xl transition-all"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Fayl yuklash
+            </button>
+            <button
+              onClick={() => setShowOneDriveModal(true)}
+              className="bg-green-600 text-white px-3 lg:px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 text-xs lg:text-sm font-medium shadow-lg hover:shadow-xl transition-all"
+            >
+              ☁️ OneDrive
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-xs lg:text-sm font-medium shadow-lg hover:shadow-xl transition-all w-full sm:w-auto lg:w-auto"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Yangi fayl
+          </button>
+        )}
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {/* Search */}
-          <div className="relative">
+          <div className="relative lg:col-span-2 xl:col-span-3">
             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
             <input
               type="text"
               placeholder="Fayl nomi yoki tavsif..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-8 pr-2 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -290,7 +389,7 @@ const FilesPage: React.FC = () => {
 
           {/* Department Filter */}
           <select
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-2 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             value={filterDepartment}
             onChange={(e) => setFilterDepartment(e.target.value)}
           >
@@ -304,7 +403,7 @@ const FilesPage: React.FC = () => {
 
           {/* File Type Filter */}
           <select
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={filterFileType}
             onChange={(e) => setFilterFileType(e.target.value)}
           >
@@ -312,21 +411,21 @@ const FilesPage: React.FC = () => {
             <option value="excel">Excel</option>
             <option value="word">Word</option>
             <option value="pdf">PDF</option>
-            <option value="other">Boshqa</option>
           </select>
 
-          {/* Stats */}
-          <div className="text-sm text-gray-600 flex items-center">
-            Jami: {filteredFiles.length} ta fayl
+          {/* Total Count */}
+          <div className="flex items-center justify-center sm:justify-start bg-gray-50 rounded-lg px-3 py-2">
+            <span className="text-sm text-gray-600">
+              Jami: <span className="font-medium">{filteredFiles.length}</span> ta fayl
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Files List */}
+      {/* Files Display */}
       {loading ? (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Fayllar yuklanmoqda...</p>
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : filteredFiles.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow-sm border">
@@ -345,114 +444,213 @@ const FilesPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fayl
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Bo'lim
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Holat
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Yuklagan
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sana
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amallar
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredFiles.map((file) => (
-                  <tr key={file.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {getFileTypeIcon(file.file_type)}
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {file.name}
+        <>
+          {/* Desktop Table */}
+          <div className="hidden xl:block bg-white rounded-lg shadow-lg border border-gray-200">
+            <div className="w-full">
+              <table className="w-full divide-y divide-gray-200 table-fixed border-collapse">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                  <tr>
+                    <th className="px-1 py-1 text-left text-xs font-semibold text-gray-600 uppercase w-1/4 border-r border-gray-200">
+                      Fayl
+                    </th>
+                    <th className="px-1 py-1 text-left text-xs font-semibold text-gray-600 uppercase w-1/8 border-r border-gray-200">
+                      Bo'lim
+                    </th>
+                    <th className="px-1 py-1 text-left text-xs font-semibold text-gray-600 uppercase w-1/12 border-r border-gray-200">
+                      Status
+                    </th>
+                    <th className="px-1 py-1 text-left text-xs font-semibold text-gray-600 uppercase w-1/8 border-r border-gray-200">
+                      User
+                    </th>
+                    <th className="px-1 py-1 text-left text-xs font-semibold text-gray-600 uppercase w-1/12 border-r border-gray-200">
+                      Date
+                    </th>
+                    <th className="px-1 py-1 text-center text-xs font-semibold text-gray-600 uppercase w-1/3">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredFiles.map((file) => (
+                    <tr key={file.id} className="hover:bg-gray-50 transition-colors duration-200">
+                      <td className="px-1 py-1 w-1/4 border-r border-gray-100">
+                        <div className="flex items-center space-x-1">
+                          <div className="flex-shrink-0">
+                            {getFileTypeIcon(file.file_type, file.is_onedrive_embed)}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {formatFileSize(file.file_size)} • {file.file_type.toUpperCase()}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-900 truncate">
+                              {file.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {formatFileSize(file.file_size)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {file.department ? file.department.name : 'Umumiy'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(file.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {file.uploaded_by.first_name} {file.uploaded_by.last_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(file.uploaded_at).toLocaleDateString('uz-UZ')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        {/* View Button */}
-                        <button
-                          onClick={() => handleFileView(file)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                          title="Ko'rish"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
-
-                        {/* Edit Button - only for Excel files and if user has edit permission */}
-                        {file.file_type === 'excel' && file.can_edit && (
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap w-1/8 border-r border-gray-100">
+                        <span className="bg-blue-50 text-blue-700 px-1 py-0.5 rounded text-xs font-medium truncate block">
+                          {file.department?.name ? file.department.name.substring(0, 6) : 'Umumiy'}
+                        </span>
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap w-1/12 border-r border-gray-100">
+                        <span className="px-1 py-0.5 text-xs font-medium rounded bg-green-100 text-green-800 block text-center">
+                          OK
+                        </span>
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap w-1/8 border-r border-gray-100">
+                        <div className="flex items-center space-x-0.5">
+                          <div className="h-4 w-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-white">
+                              {(file.uploaded_by?.first_name?.[0] || file.uploaded_by?.email?.[0] || 'U').toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-900 truncate">
+                            {file.uploaded_by?.first_name ? file.uploaded_by.first_name.substring(0, 4) : 
+                             file.uploaded_by?.email ? file.uploaded_by.email.substring(0, 4) : 'User'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap text-xs text-gray-500 w-1/12 border-r border-gray-100">
+                        {new Date(file.uploaded_at).toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' })}
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap w-1/3">
+                        <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => handleFileEdit(file)}
-                            className="text-green-600 hover:text-green-900 p-1 rounded"
-                            title="Tahrirlash"
+                            onClick={() => handleFileView(file)}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-all duration-200"
+                            title="Ko'rish"
                           >
-                            <PencilIcon className="h-4 w-4" />
+                            <EyeIcon className="h-4 w-4" />
                           </button>
-                        )}
 
-                        {/* Download Button */}
-                        <button
-                          onClick={() => handleFileDownload(file.id, file.name)}
-                          className="text-gray-600 hover:text-gray-900 p-1 rounded"
-                          title="Yuklab olish"
-                        >
-                          <ArrowDownTrayIcon className="h-4 w-4" />
-                        </button>
+                          {/* Edit Button - only for Excel files and if user has edit permission */}
+                          {file.file_type === 'excel' && file.can_edit && !file.is_onedrive_embed && (
+                            <button
+                              onClick={() => handleFileEdit(file)}
+                              className="text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded transition-all duration-200"
+                              title="Tahrirlash"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                          )}
 
-                        {/* Delete Button - only if user has delete permission */}
-                        {(file.can_delete || isAdmin) && (
                           <button
-                            onClick={() => handleFileDelete(file.id)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded"
-                            title="O'chirish"
+                            onClick={() => handleFileDownload(file.id, file.name)}
+                            className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-2 py-1 rounded transition-all duration-200"
+                            title="Yuklab olish"
                           >
-                            <TrashIcon className="h-4 w-4" />
+                            <ArrowDownTrayIcon className="h-4 w-4" />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                          {/* Delete Button - only if user has delete permission */}
+                          {(file.can_delete || isAdmin) && (
+                            <button
+                              onClick={() => handleFileDelete(file.id)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-all duration-200"
+                              title="O'chirish"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile and Tablet Cards */}
+          <div className="xl:hidden space-y-4">
+            {filteredFiles.map((file) => (
+              <div key={file.id} className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="flex-shrink-0">
+                      {getFileTypeIcon(file.file_type, file.is_onedrive_embed)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {file.name}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {formatFileSize(file.file_size)} • {file.file_type.toUpperCase()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1 ml-2">
+                    <button
+                      onClick={() => handleFileView(file)}
+                      className="text-blue-600 hover:text-blue-900 p-2 rounded transition-colors"
+                      title="Ko'rish"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    
+                    {/* Edit Button - only for Excel files and if user has edit permission */}
+                    {file.file_type === 'excel' && file.can_edit && !file.is_onedrive_embed && (
+                      <button
+                        onClick={() => handleFileEdit(file)}
+                        className="text-green-600 hover:text-green-900 p-2 rounded transition-colors"
+                        title="Tahrirlash"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => handleFileDownload(file.id, file.name)}
+                      className="text-green-600 hover:text-green-900 p-2 rounded transition-colors"
+                      title="Yuklab olish"
+                    >
+                      <ArrowDownTrayIcon className="h-4 w-4" />
+                    </button>
+                    
+                    {(file.can_delete || isAdmin) && (
+                      <button
+                        onClick={() => handleFileDelete(file.id)}
+                        className="text-red-600 hover:text-red-900 p-2 rounded transition-colors"
+                        title="O'chirish"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-500">Bo'lim:</span>
+                    <span className="ml-1">{file.department?.name || 'Umumiy'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Holat:</span>
+                    <span className="ml-1">{getStatusBadge(file.status)}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Yuklagan:</span>
+                    <span className="ml-1">
+                      {file.uploaded_by?.first_name || ''} {file.uploaded_by?.last_name || ''}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Sana:</span>
+                    <span className="ml-1">{new Date(file.uploaded_at).toLocaleDateString('uz-UZ')}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Yangi fayl yuklash</h3>
               <button
@@ -460,7 +658,7 @@ const FilesPage: React.FC = () => {
                   setShowUploadModal(false);
                   resetUploadForm();
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -494,7 +692,7 @@ const FilesPage: React.FC = () => {
                   value={uploadFormData.name}
                   onChange={(e) => setUploadFormData({ ...uploadFormData, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Masalan: Moliyaviy hisobot"
+                  placeholder="Fayl nomini kiriting"
                   required
                 />
               </div>
@@ -507,27 +705,10 @@ const FilesPage: React.FC = () => {
                 <textarea
                   value={uploadFormData.description}
                   onChange={(e) => setUploadFormData({ ...uploadFormData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows={3}
-                  placeholder="Fayl haqida qisqacha ma'lumot..."
-                />
-              </div>
-
-              {/* File Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fayl turi
-                </label>
-                <select
-                  value={uploadFormData.file_type}
-                  onChange={(e) => setUploadFormData({ ...uploadFormData, file_type: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="excel">Excel</option>
-                  <option value="word">Word</option>
-                  <option value="pdf">PDF</option>
-                  <option value="other">Boshqa</option>
-                </select>
+                  placeholder="Fayl haqida qisqacha ma'lumot"
+                />
               </div>
 
               {/* Department */}
@@ -540,7 +721,7 @@ const FilesPage: React.FC = () => {
                   onChange={(e) => setUploadFormData({ ...uploadFormData, department: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">Umumiy (bo'limga bog'lanmagan)</option>
+                  <option value="">Bo'limni tanlang</option>
                   {safeDepartments.map(dept => (
                     <option key={dept.id} value={dept.id.toString()}>
                       {dept.name}
@@ -549,22 +730,22 @@ const FilesPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Buttons */}
-              <div className="flex gap-3 pt-4">
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowUploadModal(false);
                     resetUploadForm();
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="submit"
-                  disabled={uploadLoading || !selectedFile || !uploadFormData.name.trim()}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={uploadLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
                 >
                   {uploadLoading ? (
                     <>
@@ -573,6 +754,133 @@ const FilesPage: React.FC = () => {
                     </>
                   ) : (
                     'Yuklash'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* OneDrive Modal */}
+      {showOneDriveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">OneDrive Excel Embed</h3>
+              <button
+                onClick={() => {
+                  setShowOneDriveModal(false);
+                  resetOneDriveForm();
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleOneDriveSubmit} className="space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fayl nomi *
+                </label>
+                <input
+                  type="text"
+                  value={oneDriveFormData.name}
+                  onChange={(e) => setOneDriveFormData({ ...oneDriveFormData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Excel fayl nomini kiriting"
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tavsif
+                </label>
+                <textarea
+                  value={oneDriveFormData.description}
+                  onChange={(e) => setOneDriveFormData({ ...oneDriveFormData, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Fayl haqida qisqacha ma'lumot"
+                />
+              </div>
+
+              {/* Embed URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  OneDrive Embed URL *
+                </label>
+                <input
+                  type="url"
+                  value={oneDriveFormData.embed_url}
+                  onChange={(e) => setOneDriveFormData({ ...oneDriveFormData, embed_url: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://onedrive.live.com/embed?..."
+                  required
+                />
+              </div>
+
+              {/* Direct Link */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  OneDrive Direct Link
+                </label>
+                <input
+                  type="url"
+                  value={oneDriveFormData.direct_link}
+                  onChange={(e) => setOneDriveFormData({ ...oneDriveFormData, direct_link: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://1drv.ms/x/..."
+                />
+              </div>
+
+              {/* Department */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bo'lim
+                </label>
+                <select
+                  value={oneDriveFormData.department}
+                  onChange={(e) => setOneDriveFormData({ ...oneDriveFormData, department: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Bo'limni tanlang</option>
+                  {safeDepartments.map(dept => (
+                    <option key={dept.id} value={dept.id.toString()}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOneDriveModal(false);
+                    resetOneDriveForm();
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploadLoading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
+                >
+                  {uploadLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Yuklanmoqda...
+                    </>
+                  ) : (
+                    'Yaratish'
                   )}
                 </button>
               </div>

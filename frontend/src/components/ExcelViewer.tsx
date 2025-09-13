@@ -8,9 +8,7 @@ import {
   BoldIcon,
   ItalicIcon,
   UnderlineIcon,
-  PaintBrushIcon,
-  TableCellsIcon,
-  ArrowsPointingOutIcon
+  PaintBrushIcon
 } from '@heroicons/react/24/outline';
 
 interface ExcelViewerProps {
@@ -85,7 +83,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [sheetData, setSheetData] = useState<SheetData>({});
   const [selectedCell, setSelectedCell] = useState<string | null>(null);
-  const [selectedRange, setSelectedRange] = useState<string[]>([]);
   const [formulaInput, setFormulaInput] = useState<string>('');
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,7 +93,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>({});
   const [rowHeights, setRowHeights] = useState<RowHeights>({});
   const [frozenPanes, setFrozenPanes] = useState<FrozenPanes>({ row: 0, col: 0 });
-  const [isResizing, setIsResizing] = useState<{type: 'column' | 'row', index: number} | null>(null);
   const [contextMenu, setContextMenu] = useState<{x: number, y: number, show: boolean}>({x: 0, y: 0, show: false});
   const [clipboard, setClipboard] = useState<{data: any[], range: string[]} | null>(null);
   
@@ -109,7 +105,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
   const [currentTextColor, setCurrentTextColor] = useState('#000000');
   const [currentBgColor, setCurrentBgColor] = useState('#ffffff');
   const [currentAlign, setCurrentAlign] = useState<'left' | 'center' | 'right'>('left');
-  const [currentVerticalAlign, setCurrentVerticalAlign] = useState<'top' | 'middle' | 'bottom'>('middle');
   
   // Refs
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1424,7 +1419,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
                   className="absolute right-0 top-0 w-1 h-full bg-transparent hover:bg-blue-500 cursor-col-resize"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    setIsResizing({type: 'column', index: colIndex});
                     
                     const startX = e.clientX;
                     const startWidth = columnWidths[colIndex] || 80;
@@ -1435,7 +1429,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
                     };
                     
                     const handleMouseUp = () => {
-                      setIsResizing(null);
                       document.removeEventListener('mousemove', handleMouseMove);
                       document.removeEventListener('mouseup', handleMouseUp);
                     };
@@ -1475,7 +1468,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
                   className="absolute bottom-0 left-0 w-full h-1 bg-transparent hover:bg-blue-500 cursor-row-resize"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    setIsResizing({type: 'row', index: rowIndex});
                     
                     const startY = e.clientY;
                     const startHeight = rowHeights[rowIndex] || 22;
@@ -1486,7 +1478,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
                     };
                     
                     const handleMouseUp = () => {
-                      setIsResizing(null);
                       document.removeEventListener('mousemove', handleMouseMove);
                       document.removeEventListener('mouseup', handleMouseUp);
                     };

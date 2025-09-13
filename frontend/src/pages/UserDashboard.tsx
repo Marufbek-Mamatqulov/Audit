@@ -134,27 +134,27 @@ const UserDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-3xl p-8 text-white shadow-2xl">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-xl sm:rounded-3xl p-4 sm:p-8 text-white shadow-xl sm:shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-4xl font-bold mb-2 flex items-center">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 flex items-center">
               Xush kelibsiz! 👋
             </h1>
-            <p className="text-xl text-blue-100 mb-4">
+            <p className="text-base sm:text-lg md:text-xl text-blue-100 mb-4">
               Bugunku ishlaringiz bilan tanishing va fayllarni boshqaring
             </p>
-            <div className="flex items-center space-x-4 text-blue-100">
-              <span className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="flex flex-wrap items-center space-x-2 sm:space-x-4 text-sm sm:text-base text-blue-100">
+              <span className="flex items-center space-x-2 mb-1 sm:mb-0">
+                <div className="w-2 sm:w-3 h-2 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
                 <span>Online</span>
               </span>
               <span>Oxirgi kirish: Bugun, 10:02</span>
             </div>
           </div>
-          <div className="hidden md:block">
-            <ChartBarIcon className="h-24 w-24 text-white/30" />
+          <div className="hidden md:block mt-4 sm:mt-0">
+            <ChartBarIcon className="h-16 sm:h-20 md:h-24 w-16 sm:w-20 md:w-24 text-white/30" />
           </div>
         </div>
       </div>
@@ -196,9 +196,9 @@ const UserDashboard: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6">🚀 Tezkor amallar</h2>
-        <p className="text-gray-600 mb-6">Asosiy vazifalarni bajaring va fayllarni boshqaring</p>
+      <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-white/20 p-4 sm:p-8">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-6">🚀 Tezkor amallar</h2>
+        <p className="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6">Asosiy vazifalarni bajaring va fayllarni boshqaring</p>
         
         <div className="flex flex-wrap gap-4">
           <button

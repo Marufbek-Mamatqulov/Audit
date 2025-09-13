@@ -18,6 +18,7 @@ import UsersPage from './pages/UsersPage';
 import OnlyOfficeEditor from './components/OnlyOfficeEditor';
 import FileViewer from './components/FileViewer';
 import FileEditor from './components/FileEditor';
+import OneDriveEmbedViewerWrapper from './components/OneDriveEmbedViewerWrapper';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import './App.css';
@@ -38,7 +39,7 @@ function AppContent() {
 
   return (
     <Router>
-      <div className="App">
+      <div className="App overflow-x-hidden w-full max-w-full">
         <Routes>
           {/* Public routes */}
           <Route 
@@ -79,6 +80,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <FileViewer />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/onedrive-viewer/:id" 
+            element={
+              <ProtectedRoute>
+                <OneDriveEmbedViewerWrapper />
               </ProtectedRoute>
             } 
           />

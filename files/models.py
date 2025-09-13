@@ -69,6 +69,11 @@ class File(models.Model):
         ('other', 'Other'),
     ]
     
+    # Excel-specific fields for tracking sheet information
+    has_multiple_sheets = models.BooleanField(default=False)
+    sheet_count = models.IntegerField(default=1)
+    last_active_sheet = models.CharField(max_length=255, blank=True, null=True)
+    
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('review', 'Under Review'),
@@ -78,9 +83,14 @@ class File(models.Model):
     
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    file = models.FileField(upload_to=file_upload_path)
+    file = models.FileField(upload_to=file_upload_path, blank=True, null=True)  # Make optional for OneDrive embeds
     file_type = models.CharField(max_length=20, choices=FILE_TYPE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    
+    # OneDrive embed support
+    onedrive_embed_url = models.URLField(max_length=1000, blank=True, null=True, help_text="OneDrive embed URL for Excel files")
+    is_onedrive_embed = models.BooleanField(default=False, help_text="True if this is a OneDrive embed instead of uploaded file")
+    onedrive_direct_link = models.URLField(max_length=1000, blank=True, null=True, help_text="Direct OneDrive share link")
     
     # Relationships
     uploaded_by = models.ForeignKey(

@@ -234,46 +234,47 @@ const UsersPage: React.FC = () => {
   const safeDepartments = Array.isArray(departments) ? departments : [];
 
   return (
-    <div className="p-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       {/* Admin Status Alert */}
       <div className={`p-3 rounded-lg mb-4 ${isAdmin ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
         <div className="flex items-center space-x-2">
           {isAdmin ? (
             <>
-              <CheckCircleIcon className="w-5 h-5 text-green-600" />
-              <span className="text-green-800 font-medium">Admin huquqiga egasiz - barcha amallarni bajara olasiz</span>
+              <CheckCircleIcon className="w-4 w-4 sm:w-5 sm:h-5 text-green-600" />
+              <span className="text-green-800 font-medium text-sm sm:text-base">Admin huquqiga egasiz - barcha amallarni bajara olasiz</span>
             </>
           ) : (
             <>
-              <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600" />
-              <span className="text-yellow-800 font-medium">Oddiy foydalanuvchi - faqat ko'rish huquqi</span>
+              <ExclamationTriangleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
+              <span className="text-yellow-800 font-medium text-sm sm:text-base">Oddiy foydalanuvchi - faqat ko'rish huquqi</span>
             </>
           )}
         </div>
       </div>
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-3">
-          <UserGroupIcon className="w-8 h-8 text-indigo-600" />
+          <UserGroupIcon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Foydalanuvchilar</h1>
-            <p className="text-gray-600">Tizim foydalanuvchilarini boshqaring</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Foydalanuvchilar</h1>
+            <p className="text-gray-600 text-sm sm:text-base">Tizim foydalanuvchilarini boshqaring</p>
           </div>
         </div>
         {isAdmin && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center justify-center space-x-2 bg-indigo-600 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
           >
-            <PlusIcon className="w-5 h-5" />
-            <span>Yangi foydalanuvchi</span>
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Yangi foydalanuvchi</span>
+            <span className="sm:hidden">Yangi</span>
           </button>
         )}
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* Users Table - Desktop */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -383,12 +384,92 @@ const UsersPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Users Cards - Mobile */}
+      <div className="lg:hidden space-y-4">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : safeUsers.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            Foydalanuvchilar topilmadi
+          </div>
+        ) : (
+          safeUsers.map((user) => (
+            <div key={user.id} className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-indigo-600 font-medium text-sm">
+                      {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {user.first_name} {user.last_name}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <div className="flex items-center space-x-1 ml-2">
+                    <button
+                      onClick={() => startEditUser(user)}
+                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded"
+                      title="Tahrirlash"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded"
+                      title="O'chirish"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-500">Rol:</span>
+                  <span className={`ml-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                    user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {user.role === 'admin' ? 'Admin' : 
+                     user.role === 'manager' ? 'Menejer' : 'Foydalanuvchi'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Status:</span>
+                  <span className={`ml-1 inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {user.is_active ? 'Faol' : 'Nofaol'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mt-2 text-xs">
+                <span className="text-gray-500">Bo'lim:</span>
+                <span className="ml-1 text-gray-900">
+                  {user.department ? user.department.name : 'Belgilanmagan'}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Create User Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-semibold">Yangi foydalanuvchi</h2>
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold">Yangi foydalanuvchi</h2>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
@@ -399,15 +480,15 @@ const UsersPage: React.FC = () => {
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleCreateUser} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleCreateUser} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ism</label>
                   <input
                     type="text"
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     required
                   />
                 </div>
@@ -417,7 +498,7 @@ const UsersPage: React.FC = () => {
                     type="text"
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     required
                   />
                 </div>
@@ -428,7 +509,7 @@ const UsersPage: React.FC = () => {
                   type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   required
                 />
               </div>
@@ -438,7 +519,7 @@ const UsersPage: React.FC = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   required
                 />
               </div>
@@ -448,7 +529,7 @@ const UsersPage: React.FC = () => {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   required
                 />
               </div>
@@ -458,7 +539,7 @@ const UsersPage: React.FC = () => {
                   type="password"
                   value={formData.password_confirm}
                   onChange={(e) => setFormData({ ...formData, password_confirm: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   required
                 />
               </div>
@@ -467,7 +548,7 @@ const UsersPage: React.FC = () => {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'manager' | 'user' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   required
                 >
                   <option value="user">Foydalanuvchi</option>
@@ -480,7 +561,7 @@ const UsersPage: React.FC = () => {
                 <select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                 >
                   <option value="">Bo'lim tanlang</option>
                   {safeDepartments.map((dept) => (
@@ -488,21 +569,21 @@ const UsersPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
                 >
                   {loading ? 'Saqlash...' : 'Saqlash'}
                 </button>
@@ -515,8 +596,8 @@ const UsersPage: React.FC = () => {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center p-6 border-b">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b">
               <h2 className="text-xl font-semibold">Foydalanuvchini tahrirlash</h2>
               <button
                 onClick={() => {
@@ -569,7 +650,7 @@ const UsersPage: React.FC = () => {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                 />
               </div>
               <div>
@@ -577,7 +658,7 @@ const UsersPage: React.FC = () => {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'manager' | 'user' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   required
                 >
                   <option value="user">Foydalanuvchi</option>
@@ -590,7 +671,7 @@ const UsersPage: React.FC = () => {
                 <select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                 >
                   <option value="">Bo'lim tanlang</option>
                   {safeDepartments.map((dept) => (
@@ -610,21 +691,21 @@ const UsersPage: React.FC = () => {
                   Faol foydalanuvchi
                 </label>
               </div>
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setEditingUser(null);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
                 >
                   {loading ? 'Saqlash...' : 'Saqlash'}
                 </button>
