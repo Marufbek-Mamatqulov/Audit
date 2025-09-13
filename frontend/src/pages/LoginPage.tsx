@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { login, clearError } from '../store/slices/authSlice';
 import {
-  ChartBarIcon,
   UserIcon,
   LockClosedIcon,
   EyeIcon,
   EyeSlashIcon,
   ExclamationTriangleIcon,
   ArrowRightOnRectangleIcon,
+  AcademicCapIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 const LoginPage: React.FC = () => {
@@ -45,115 +46,120 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-32 w-80 h-80 bg-purple-300/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-300/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-200/10 rounded-full blur-3xl"></div>
+        {/* Animated background elements */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-blue-400/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-48 h-48 bg-indigo-400/10 rounded-full blur-xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-400/10 rounded-full blur-xl animate-pulse delay-500"></div>
+        
+        {/* Grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
       </div>
 
       <div className="relative max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 shadow-2xl">
-            <ChartBarIcon className="h-10 w-10 text-white" />
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="w-20 h-20 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl">
+                <img 
+                  src="/logo/logo talim.png" 
+                  alt="RTRMM Logo" 
+                  className="w-12 h-12 object-contain"
+                  onError={(e) => {
+                    // Fallback to icon if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <AcademicCapIcon className="w-12 h-12 text-white hidden" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center shadow-lg">
+                <DocumentTextIcon className="w-3 h-3 text-white" />
+              </div>
+            </div>
           </div>
-          <h2 className="text-4xl font-bold text-gray-900 mb-3">
-            Xush kelibsiz
+          
+          <h2 className="text-3xl font-bold text-white mb-2">
+            Moliya Bo'limi
           </h2>
-          <p className="text-gray-600 text-lg">
-            Audit tizimiga kirishingiz uchun ma'lumotlaringizni kiriting
+          <p className="text-blue-100 text-lg mb-2">
+            Hujjat Boshqaruv Tizimi
+          </p>
+          <p className="text-blue-200 text-sm">
+            Raqamli Ta'limni Rivojlantirish Markazi
           </p>
         </div>
 
-        {/* Form */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
+        {/* Login Form */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/30 text-red-100 px-4 py-3 rounded-lg mb-6 flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl animate-bounceIn">
-                <div className="flex items-center">
-                  <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
-                  <span>{error}</span>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+                Email manzil
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <UserIcon className="h-5 w-5 text-blue-200" />
                 </div>
-              </div>
-            )}
-
-            <div className="space-y-5">
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email manzil
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <UserIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="appearance-none relative block w-full pl-10 pr-3 py-4 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 transition-all duration-200 bg-white/50 backdrop-blur"
-                    placeholder="admin@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Parol
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <LockClosedIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    className="appearance-none relative block w-full pl-10 pr-12 py-4 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 transition-all duration-200 bg-white/50 backdrop-blur"
-                    placeholder="Parolni kiriting"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <button
-                      type="button"
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeSlashIcon className="h-5 w-5" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="appearance-none relative block w-full px-12 py-3 bg-white/10 border border-white/20 placeholder-blue-200 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent focus:bg-white/20 transition-all"
+                  placeholder="email@rtrmm.uz"
+                />
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
+                Parol
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <LockClosedIcon className="h-5 w-5 text-blue-200" />
+                </div>
                 <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="appearance-none relative block w-full px-12 py-3 bg-white/10 border border-white/20 placeholder-blue-200 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent focus:bg-white/20 transition-all pr-12"
+                  placeholder="••••••••"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Meni eslab qol
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <button type="button" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-                  Parolni unutdingizmi?
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-blue-200 hover:text-white transition-colors" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-blue-200 hover:text-white transition-colors" />
+                  )}
                 </button>
               </div>
             </div>
@@ -162,43 +168,31 @@ const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-2xl hover:scale-105"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-blue-900 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
               >
                 {loading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Kuting...
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-900 mr-2"></div>
+                    Kirish...
                   </div>
                 ) : (
                   <div className="flex items-center">
                     <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
-                    Kirish
+                    Tizimga kirish
                   </div>
                 )}
               </button>
             </div>
           </form>
-
-          {/* Demo credentials */}
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">Demo hisobi:</h4>
-            <div className="space-y-1 text-sm text-blue-700">
-              <div className="flex justify-between">
-                <span>Email:</span>
-                <span className="font-mono">admin@example.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Parol:</span>
-                <span className="font-mono">admin123</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
         <div className="text-center">
-          <p className="text-sm text-gray-500">
-            © 2024 Audit System. Barcha huquqlar himoyalangan.
+          <p className="text-blue-200 text-sm">
+            © 2024 Raqamli Ta'limni Rivojlantirish Markazi
+          </p>
+          <p className="text-blue-300 text-xs mt-1">
+            Moliya bo'limi xodimlariga maxsus
           </p>
         </div>
       </div>

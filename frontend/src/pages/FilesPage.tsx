@@ -270,7 +270,7 @@ const FilesPage: React.FC = () => {
                          file.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesDepartment = !filterDepartment || 
-                             (file.department && file.department.id.toString() === filterDepartment);
+                             (file.department && file.department.id && file.department.id.toString() === filterDepartment);
     
     const matchesFileType = !filterFileType || file.file_type === filterFileType;
     
@@ -395,9 +395,11 @@ const FilesPage: React.FC = () => {
           >
             <option value="">Barcha bo'limlar</option>
             {safeDepartments.map(dept => (
-              <option key={dept.id} value={dept.id.toString()}>
-                {dept.name}
-              </option>
+              dept && dept.id ? (
+                <option key={dept.id} value={dept.id.toString()}>
+                  {dept.name || 'Noma\'lum bo\'lim'}
+                </option>
+              ) : null
             ))}
           </select>
 
@@ -723,9 +725,11 @@ const FilesPage: React.FC = () => {
                 >
                   <option value="">Bo'limni tanlang</option>
                   {safeDepartments.map(dept => (
-                    <option key={dept.id} value={dept.id.toString()}>
-                      {dept.name}
-                    </option>
+                    dept && dept.id ? (
+                      <option key={dept.id} value={dept.id.toString()}>
+                        {dept.name || 'Noma\'lum bo\'lim'}
+                      </option>
+                    ) : null
                   ))}
                 </select>
               </div>
@@ -850,9 +854,11 @@ const FilesPage: React.FC = () => {
                 >
                   <option value="">Bo'limni tanlang</option>
                   {safeDepartments.map(dept => (
-                    <option key={dept.id} value={dept.id.toString()}>
-                      {dept.name}
-                    </option>
+                    dept && dept.id ? (
+                      <option key={dept.id} value={dept.id.toString()}>
+                        {dept.name || 'Noma\'lum bo\'lim'}
+                      </option>
+                    ) : null
                   ))}
                 </select>
               </div>

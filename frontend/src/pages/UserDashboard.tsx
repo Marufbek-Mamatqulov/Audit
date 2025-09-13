@@ -140,10 +140,10 @@ const UserDashboard: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 flex items-center">
-              Xush kelibsiz! 👋
+              RTRMM xodimi - Xush kelibsiz! 👋
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-blue-100 mb-4">
-              Bugunku ishlaringiz bilan tanishing va fayllarni boshqaring
+              Raqamli Ta'limni Rivojlantirish Markazi - Moliya bo'limi
             </p>
             <div className="flex flex-wrap items-center space-x-2 sm:space-x-4 text-sm sm:text-base text-blue-100">
               <span className="flex items-center space-x-2 mb-1 sm:mb-0">

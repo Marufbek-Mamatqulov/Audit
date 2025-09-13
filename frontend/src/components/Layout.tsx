@@ -67,12 +67,23 @@ const Layout: React.FC = () => {
         {/* Logo qismi */}
         <div className="flex items-center justify-center lg:justify-between h-16 px-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 shadow-lg">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur">
-              <ChartBarIcon className="h-6 w-6 text-white" />
+            <div className="p-1 bg-white/20 rounded-lg backdrop-blur">
+              <img 
+                src="/logo/logo talim.png" 
+                alt="RTRMM Logo" 
+                className="h-8 w-8 object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'block';
+                }}
+              />
+              <ChartBarIcon className="h-6 w-6 text-white hidden" />
             </div>
             <div className="hidden lg:block">
-              <h1 className="text-lg font-bold text-white">Audit</h1>
-              <p className="text-sm text-blue-100">Docs</p>
+              <h1 className="text-lg font-bold text-white">RTRMM</h1>
+              <p className="text-sm text-blue-100">Moliya</p>
             </div>
           </div>
           <button
@@ -173,8 +184,9 @@ const Layout: React.FC = () => {
               
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">
-                  Document Management
+                  Raqamli Ta'limni Rivojlantirish Markazi
                 </h2>
+                <p className="text-xs text-gray-500">Moliya bo'limi</p>
               </div>
             </div>
             

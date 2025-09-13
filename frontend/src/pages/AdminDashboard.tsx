@@ -124,10 +124,10 @@ const AdminDashboard: React.FC = () => {
       <div className="mb-3 lg:mb-4">
         <h1 className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 flex items-center gap-2">
           <ChartBarIcon className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600" />
-          Admin Dashboard
+          RTRMM - Moliya Dashboard
         </h1>
         <p className="mt-1 text-xs lg:text-sm text-gray-600">
-          Monitor and manage system analytics.
+          Raqamli Ta'limni Rivojlantirish Markazi moliya bo'limi boshqaruv paneli
         </p>
       </div>
 
