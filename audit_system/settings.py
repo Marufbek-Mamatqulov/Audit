@@ -27,7 +27,14 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-c1w67w92g%+&4-@znj)1n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,audit-jade.vercel.app,audit-git-main-marufs-projects-b3e0ef97.vercel.app,audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app').split(',')
+
+# CSRF trusted origins for frontend domains
+CSRF_TRUSTED_ORIGINS = [
+    "https://audit-jade.vercel.app",
+    "https://audit-git-main-marufs-projects-b3e0ef97.vercel.app",
+    "https://audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app",
+]
 
 
 # Application definition
@@ -181,18 +188,16 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# CORS Settings
+# CORS settings: allow only trusted origins
 CORS_ALLOWED_ORIGINS = [
+    "https://audit-jade.vercel.app",
+    "https://audit-git-main-marufs-projects-b3e0ef97.vercel.app",
+    "https://audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://audit-jade.vercel.app",
-    "https://rtrmm-moliya-frontend.vercel.app",
-    "https://rtrmm-moliya-frontend-git-main-marufbek-mamatqulov.vercel.app",
-    "https://rtrmm-moliya-frontend-marufbek-mamatqulov.vercel.app",
 ]
-
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True  # Temporary fix for production testing
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
@@ -204,6 +209,16 @@ CORS_ALLOWED_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+# --- Security settings for production ---
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # OnlyOffice Document Server
 ONLYOFFICE_DOCUMENT_SERVER_URL = config('ONLYOFFICE_DOCUMENT_SERVER_URL', default='http://localhost:8080')
