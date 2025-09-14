@@ -1,11 +1,14 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
-// For production (Vercel), use proxy for all requests to avoid mixed content
-// For development, use direct API for file operations
-const DIRECT_API_URL = process.env.NODE_ENV === 'production' 
-  ? API_BASE_URL  // Use proxy in production
+// Always use Vercel proxy (/api) in production, never direct backend URL
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : (process.env.REACT_APP_API_URL || 'http://localhost:8000/api');
+
+// In production, directApi is same as api (proxy). In development, can use direct backend for file ops.
+const DIRECT_API_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
   : (process.env.REACT_APP_DIRECT_API_URL || 'http://127.0.0.1:8000/api');
 
 class ApiService {
