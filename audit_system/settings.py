@@ -192,7 +192,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = config('DEBUG', default=True, cast=bool)  # Only in development
+CORS_ALLOW_ALL_ORIGINS = True  # Temporary fix for production testing
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
