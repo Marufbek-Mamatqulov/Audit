@@ -50,13 +50,27 @@ const FileViewer: React.FC = () => {
   const fetchFile = async (fileId: number) => {
     try {
       setLoading(true);
+      console.log('Fetching file ID:', fileId);
+      console.log('Access token:', localStorage.getItem('access_token') ? 'Present' : 'Missing');
       const response = await filesApi.getFile(fileId);
       console.log('File data received:', response.data);
       console.log('File URL:', response.data.file_url);
       setFile(response.data);
     } catch (error: any) {
       console.error('Error fetching file:', error);
-      setError('Faylni yuklashda xatolik yuz berdi');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      let errorMessage = 'Faylni yuklashda xatolik yuz berdi';
+      if (error.response?.status === 401) {
+        errorMessage = 'Avtorizatsiya xatosi. Iltimos, qaytadan login qiling.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Fayl topilmadi yoki o\'chirilgan.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
