@@ -1,13 +1,25 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+// Direct backend URL for file uploads (bypass Vercel proxy limitations)
+const DIRECT_API_URL = process.env.REACT_APP_DIRECT_API_URL || 'http://31.220.86.100/api';
 
 class ApiService {
   private api: AxiosInstance;
+  private directApi: AxiosInstance;
 
   constructor() {
+    // Main API instance (uses proxy in production)
     this.api = axios.create({
       baseURL: API_BASE_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Direct API instance for file uploads
+    this.directApi = axios.create({
+      baseURL: DIRECT_API_URL,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -59,6 +71,59 @@ class ApiService {
         return Promise.reject(error);
       }
     );
+
+    // Setup interceptors for direct API as well
+    this.setupDirectApiInterceptors();
+  }
+
+  private setupDirectApiInterceptors() {
+    // Request interceptor for direct API
+    this.directApi.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    // Response interceptor for direct API
+    this.directApi.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const original = error.config;
+        
+        if (error.response?.status === 401 && !original._retry) {
+          original._retry = true;
+          
+          const refreshToken = localStorage.getItem('refresh_token');
+          if (refreshToken) {
+            try {
+              // Use main API for token refresh
+              const response = await this.api.post('/auth/token/refresh/', {
+                refresh: refreshToken,
+              });
+              
+              const { access } = response.data;
+              localStorage.setItem('access_token', access);
+              
+              // Retry original request with new token
+              original.headers.Authorization = `Bearer ${access}`;
+              return this.directApi(original);
+            } catch (refreshError) {
+              // Refresh failed, redirect to login
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refresh_token');
+              window.location.href = '/login';
+            }
+          }
+        }
+        
+        return Promise.reject(error);
+      }
+    );
   }
 
   // Generic HTTP methods
@@ -82,9 +147,9 @@ class ApiService {
     return this.api.delete(url, config);
   }
 
-  // File upload method
+  // File upload method - uses direct API to bypass Vercel proxy limitations
   upload(url: string, formData: FormData, config?: AxiosRequestConfig) {
-    return this.api.post(url, formData, {
+    return this.directApi.post(url, formData, {
       ...config,
       headers: {
         'Content-Type': 'multipart/form-data',
