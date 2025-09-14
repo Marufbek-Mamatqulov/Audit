@@ -223,12 +223,13 @@ const FilesPage: React.FC = () => {
   };
 
   const handleFileView = (file: FileData) => {
+    const baseUrl = window.location.origin;
     if (file.is_onedrive_embed && file.onedrive_embed_url) {
       // OneDrive embed fayllar uchun
-      window.open(`http://localhost:3000/onedrive-viewer/${file.id}`, '_blank');
+      window.open(`${baseUrl}/onedrive-viewer/${file.id}`, '_blank');
     } else if (file.file_type === 'excel') {
       // Oddiy Excel fayllari uchun OnlyOffice viewer
-      window.open(`http://localhost:3000/file-viewer/${file.id}`, '_blank');
+      window.open(`${baseUrl}/file-viewer/${file.id}`, '_blank');
     } else {
       // Boshqa fayllar uchun download
       handleFileDownload(file.id, file.name);
@@ -236,8 +237,9 @@ const FilesPage: React.FC = () => {
   };
 
   const handleFileEdit = (file: FileData) => {
+    const baseUrl = window.location.origin;
     if (file.file_type === 'excel' && !file.is_onedrive_embed) {
-      window.open(`http://localhost:3000/file-editor/${file.id}`, '_blank');
+      window.open(`${baseUrl}/file-editor/${file.id}`, '_blank');
     }
   };
 
