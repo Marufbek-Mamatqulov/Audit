@@ -50,16 +50,28 @@ const FileViewer: React.FC = () => {
   const fetchFile = async (fileId: number) => {
     try {
       setLoading(true);
+      console.log('=== FILE VIEWER DEBUG ===');
       console.log('Fetching file ID:', fileId);
-      console.log('Access token:', localStorage.getItem('access_token') ? 'Present' : 'Missing');
+      console.log('Access token exists:', !!localStorage.getItem('access_token'));
+      console.log('API Base URL:', process.env.REACT_APP_API_URL);
+      console.log('Direct API URL:', process.env.REACT_APP_DIRECT_API_URL);
+      
       const response = await filesApi.getFile(fileId);
-      console.log('File data received:', response.data);
+      console.log('✅ File fetch successful');
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
       console.log('File URL:', response.data.file_url);
+      console.log('========================');
+      
       setFile(response.data);
     } catch (error: any) {
-      console.error('Error fetching file:', error);
-      console.error('Error response:', error.response?.data);
+      console.log('❌ FILE FETCH ERROR ❌');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error response:', error.response);
       console.error('Error status:', error.response?.status);
+      console.error('Error data:', error.response?.data);
+      console.log('========================');
       
       let errorMessage = 'Faylni yuklashda xatolik yuz berdi';
       if (error.response?.status === 401) {
@@ -68,6 +80,8 @@ const FileViewer: React.FC = () => {
         errorMessage = 'Fayl topilmadi yoki o\'chirilgan.';
       } else if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = `Network Error: ${error.message}`;
       }
       
       setError(errorMessage);
