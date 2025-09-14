@@ -27,13 +27,14 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-c1w67w92g%+&4-@znj)1n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,audit-jade.vercel.app,audit-git-main-marufs-projects-b3e0ef97.vercel.app,audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,audit-jade.vercel.app,audit-git-main-marufs-projects-b3e0ef97.vercel.app,audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app,audit.31.220.86.100.nip.io').split(',')
 
 # CSRF trusted origins for frontend domains
 CSRF_TRUSTED_ORIGINS = [
     "https://audit-jade.vercel.app",
     "https://audit-git-main-marufs-projects-b3e0ef97.vercel.app",
     "https://audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app",
+    "https://audit.31.220.86.100.nip.io",
 ]
 
 
@@ -193,6 +194,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://audit-jade.vercel.app",
     "https://audit-git-main-marufs-projects-b3e0ef97.vercel.app",
     "https://audit-34z2f1qmb-marufs-projects-b3e0ef97.vercel.app",
+    "https://audit.31.220.86.100.nip.io",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
