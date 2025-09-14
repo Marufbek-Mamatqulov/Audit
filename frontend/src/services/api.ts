@@ -157,6 +157,11 @@ class ApiService {
       },
     });
   }
+
+  // Direct API get method for file operations (bypass proxy)
+  directGet(url: string, config?: AxiosRequestConfig) {
+    return this.directApi.get(url, config);
+  }
 }
 
 const api = new ApiService();
@@ -235,13 +240,13 @@ export const filesApi = {
   
   uploadFile: (formData: FormData) => api.upload('/files/', formData),
   
-  getFile: (id: number) => api.get(`/files/${id}/`),
+  getFile: (id: number) => api.directGet(`/files/${id}/`), // Use direct API
   
   updateFile: (id: number, data: any) => api.patch(`/files/${id}/`, data),
   
   deleteFile: (id: number) => api.delete(`/files/${id}/`),
   
-  downloadFile: (id: number) => api.get(`/files/${id}/download/`, {
+  downloadFile: (id: number) => api.directGet(`/files/${id}/download/`, { // Use direct API
     responseType: 'blob'
   }),
   
