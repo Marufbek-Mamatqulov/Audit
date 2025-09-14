@@ -1,8 +1,12 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
-// Direct backend URL for file uploads (bypass Vercel proxy limitations)
-const DIRECT_API_URL = process.env.REACT_APP_DIRECT_API_URL || 'http://31.220.86.100/api';
+
+// For production (Vercel), use proxy for all requests to avoid mixed content
+// For development, use direct API for file operations
+const DIRECT_API_URL = process.env.NODE_ENV === 'production' 
+  ? API_BASE_URL  // Use proxy in production
+  : (process.env.REACT_APP_DIRECT_API_URL || 'http://127.0.0.1:8000/api');
 
 class ApiService {
   private api: AxiosInstance;
@@ -17,7 +21,7 @@ class ApiService {
       },
     });
 
-    // Direct API instance for file uploads
+    // Direct API instance (same as main API in production)
     this.directApi = axios.create({
       baseURL: DIRECT_API_URL,
       headers: {
