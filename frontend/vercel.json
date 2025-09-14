@@ -1,45 +1,14 @@
 {
-  "version": 2,
-  "name": "rtrmm-moliya-frontend",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/favicon/(.*)",
-      "dest": "/favicon/$1"
-    },
-    {
-      "src": "/logo/(.*)",
-      "dest": "/logo/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
   "env": {
     "REACT_APP_API_URL": "http://31.220.86.100/api",
     "REACT_APP_NAME": "RTRMM Moliya",
-    "REACT_APP_VERSION": "1.0.0",
-    "HTTPS": "false"
+    "REACT_APP_VERSION": "1.0.0"
   },
   "build": {
     "env": {
       "REACT_APP_API_URL": "http://31.220.86.100/api",
       "REACT_APP_NAME": "RTRMM Moliya", 
-      "REACT_APP_VERSION": "1.0.0",
-      "HTTPS": "false"
+      "REACT_APP_VERSION": "1.0.0"
     }
   }
 }
