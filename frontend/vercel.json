@@ -15,7 +15,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://31.220.86.100/api/$1"
+      "destination": "https://audit.31.220.86.100.nip.io/api/$1"
     }
   ]
 }
