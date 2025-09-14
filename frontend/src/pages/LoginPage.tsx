@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
         />
       </div>
 
-      <div className="relative max-w-md w-full space-y-8">
+      <div className="relative max-w-sm sm:max-w-md w-full mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
